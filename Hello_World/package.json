@@ -1,0 +1,8 @@
+{
+	"name": "HelloWorld",
+	"version": "0.0.1",
+	"description": "Test webpage to display Hello World and its NodeJS Runtime Version in Port 8081",
+	"main": "HelloWorld.js",
+	"author": "ST Electronics",
+	"license": "CC0-1.0"
+}
