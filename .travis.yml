@@ -13,8 +13,6 @@ addons:
     packages:
       - nasm
       - squashfs-tools
-      - gcc-5
-      - g++-5
   homebrew:
     packages:
       - nasm
@@ -27,7 +25,7 @@ matrix:
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_1
   - os: linux
-    dist: bionic
+    dist: xenial
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_1
   - os: osx
@@ -35,7 +33,7 @@ matrix:
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_2
   - os: linux
-    dist: bionic
+    dist: xenial
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_2
   - os: osx
@@ -43,7 +41,7 @@ matrix:
     node_js: $NODEVER
     env: TEST_SCRIPT=datetime
   - os: linux
-    dist: bionic
+    dist: xenial
     node_js: $NODEVER
     env: TEST_SCRIPT=datetime
 before_install:
@@ -52,7 +50,7 @@ before_install:
   - rvm install "${RUBY_VER}"
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export PRJROOT_DIR="$OSXPRJDIR"; clang --version; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; export CC=gcc-5; export CXX=g++-5; gcc --version; g++ --version; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; export CC=gcc; export CXX=g++; gcc --version; g++ --version; fi
   - mkdir -p $NODEC_TESTS_TMPDIR
   - git clone --depth 1 https://github.com/jashkenas/coffeescript.git
   - cd $PRJROOT_DIR
