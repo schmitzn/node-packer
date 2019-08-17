@@ -1,7 +1,7 @@
 language: node_js
 env:
     global:
-        - NODEVER=10.16.2
+        - NODEVER=10.16.3
         - RUBY_VER=2.6.3
         - arch=x64
         - mode=release
@@ -50,10 +50,9 @@ before_install:
   - rvm install "${RUBY_VER}"
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export PRJROOT_DIR="$OSXPRJDIR"; clang --version; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; export CC=gcc; export CXX=g++; gcc --version; g++ --version; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; gcc --version; g++ --version; fi
   - mkdir -p $NODEC_TESTS_TMPDIR
   - git clone --depth 1 https://github.com/jashkenas/coffeescript.git
-  - cd $PRJROOT_DIR
 before_script:
   - python --version
   - nasm -v
