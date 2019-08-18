@@ -10,30 +10,9 @@ env:
         - OSXPRJDIR=/Users/travis/build/slee047/node-packer
 addons:
   apt:
-    sources:
-     - sourceline: 'ppa:ubuntu-toolchain-r/test'
     packages:
       - nasm
       - squashfs-tools
-      - gcc-6
-      - g++-6
-      - gcc-6-locales
-      - g++-6-multilib
-      - gcc-6-doc
-      - libstdc++6-6-dbg
-      - gcc-6-multilib
-      - libgcc1-dbg
-      - libgomp1-dbg
-      - libitm1-dbg
-      - libatomic1-dbg
-      - libasan3-dbg
-      - liblsan0-dbg
-      - libtsan0-dbg
-      - libubsan0-dbg
-      - libcilkrts5-dbg
-      - libmpx2-dbg
-      - libquadmath0-dbg
-      - libstdc++-6-doc
   homebrew:
     packages:
       - nasm
@@ -45,7 +24,7 @@ matrix:
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_1
   - os: linux
-    dist: xenial
+    dist: bionic
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_1
   - os: osx
@@ -53,7 +32,7 @@ matrix:
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_2
   - os: linux
-    dist: xenial
+    dist: bionic
     node_js: $NODEVER
     env: TEST_SCRIPT=coffeescript_2
   - os: osx
@@ -61,7 +40,7 @@ matrix:
     node_js: $NODEVER
     env: TEST_SCRIPT=datetime
   - os: linux
-    dist: xenial
+    dist: bionic
     node_js: $NODEVER
     env: TEST_SCRIPT=datetime
 before_install:
@@ -70,7 +49,7 @@ before_install:
   - rvm install "${RUBY_VER}"
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export PRJROOT_DIR="$OSXPRJDIR"; clang --version; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; export CC="gcc-6"; export CXX="g++-6"; gcc-6 --version; g++-6 --version; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; gcc --version; g++ --version; fi
   - mkdir -p $NODEC_TESTS_TMPDIR
   - git clone --depth 1 https://github.com/jashkenas/coffeescript.git
 before_script:
