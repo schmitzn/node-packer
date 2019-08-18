@@ -13,10 +13,11 @@ addons:
     packages:
       - nasm
       - squashfs-tools
+      - gcc-6
+      - g++-6
   homebrew:
     packages:
       - nasm
-      - openssl
       - squashfs
 matrix:
   include:
@@ -50,7 +51,7 @@ before_install:
   - rvm install "${RUBY_VER}"
 install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then export PRJROOT_DIR="$OSXPRJDIR"; clang --version; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; gcc --version; g++ --version; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PRJROOT_DIR="$LINPRJDIR"; export CC="gcc-6"; export CXX="g++-6"; gcc-6 --version; g++-6 --version; fi
   - mkdir -p $NODEC_TESTS_TMPDIR
   - git clone --depth 1 https://github.com/jashkenas/coffeescript.git
 before_script:
