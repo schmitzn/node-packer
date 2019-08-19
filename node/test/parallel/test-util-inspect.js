@@ -20,7 +20,6 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 'use strict';
-if ('osx' === process.env.TRAVIS_OS_NAME) { return; }
 require('../common');
 const assert = require('assert');
 const JSStream = process.binding('js_stream').JSStream;

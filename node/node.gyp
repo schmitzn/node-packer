@@ -184,9 +184,6 @@
       'include_dirs': [
         'src',
         'deps/v8/include',
-        'deps/libsquash/include',
-        'deps/libsquash/sample',
-        'deps/libautoupdate/include',
       ],
       'conditions': [
         [ 'node_intermediate_lib_type=="static_library" and '
@@ -260,9 +257,6 @@
 
       'dependencies': [
         'node_js2c#host',
-        'deps/nghttp2/nghttp2.gyp:nghttp2',
-        'deps/libsquash/enclose_io_libsquash.gyp:enclose_io_libsquash',
-        'deps/libautoupdate/libautoupdate.gyp:libautoupdate',
       ],
 
       'includes': [
@@ -271,13 +265,7 @@
 
       'include_dirs': [
         'src',
-        'tools/msvs/genfiles',
-        'deps/uv/src/ares',
-        'deps/nghttp2/lib/includes',
-        'deps/libsquash/include',
-        'deps/libsquash/sample',
-        'deps/libautoupdate/include',
-        '<(SHARED_INTERMEDIATE_DIR)', # for node_natives.h
+        '<(SHARED_INTERMEDIATE_DIR)' # for node_natives.h
       ],
 
       'sources': [
@@ -900,8 +888,6 @@
         '<(node_lib_target_name)',
         'rename_node_bin_win',
         'deps/gtest/gtest.gyp:gtest',
-        'deps/libsquash/enclose_io_libsquash.gyp:enclose_io_libsquash',
-        'deps/libautoupdate/libautoupdate.gyp:libautoupdate',
         'node_js2c#host',
         'node_dtrace_header',
         'node_dtrace_ustack',
