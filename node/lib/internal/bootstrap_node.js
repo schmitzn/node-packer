@@ -71,8 +71,21 @@
     NativeModule.require('internal/trace_events_async_hooks').setup();
     NativeModule.require('internal/inspector_async_hook').setup();
 
-    _process.setupChannel();
-    _process.setupRawDebug(_rawDebug);
+    if (process.env.ENCLOSE_IO_USE_ORIGINAL_NODE) {
+      delete process.env.ENCLOSE_IO_USE_ORIGINAL_NODE;
+    }
+
+    if (process.env.ENCLOSE_IO_CHDIR) {
+      process.chdir(process.env.ENCLOSE_IO_CHDIR);
+      delete process.env.ENCLOSE_IO_CHDIR;
+    }
+
+    // Do not initialize channel in debugger agent, it deletes env variable
+    // and the main thread won't see it.
+    if (process.argv[1] !== '--debug-agent')
+      _process.setupChannel();
+
+    _process.setupRawDebug();
 
     const browserGlobals = !process._noBrowserGlobals;
     if (browserGlobals) {
@@ -87,8 +100,10 @@
     // On OpenBSD process.execPath will be relative unless we
     // get the full path before process.execPath is used.
     if (process.platform === 'openbsd') {
-      const { realpathSync } = NativeModule.require('fs');
-      process.execPath = realpathSync(process.execPath);
+      const {
+        realpathSync
+      } = NativeModule.require('fs');
+      process.execPath = realpathSync.native(process.execPath);
     }
 
     Object.defineProperty(process, 'argv0', {
@@ -117,7 +132,6 @@
         'The ESM module loader is experimental.',
         'ExperimentalWarning', undefined);
     }
-
 
     // There are various modes that Node can run in. The most common two
     // are running from a script and running the REPL - but there are a few
@@ -339,15 +353,20 @@
     if (!process.config.variables.v8_enable_inspector) {
       return;
     }
-    const { addCommandLineAPI, consoleCall } = process.binding('inspector');
+    const {
+      addCommandLineAPI,
+      consoleCall
+    } = process.binding('inspector');
     // Setup inspector command line API
-    const { makeRequireFunction } = NativeModule.require('internal/module');
+    const {
+      makeRequireFunction
+    } = NativeModule.require('internal/module');
     const path = NativeModule.require('path');
     const cwd = tryGetCwd(path);
 
     const consoleAPIModule = new Module('<inspector console>');
     consoleAPIModule.paths =
-        Module._nodeModulePaths(cwd).concat(Module.globalPaths);
+      Module._nodeModulePaths(cwd).concat(Module.globalPaths);
     addCommandLineAPI('require', makeRequireFunction(consoleAPIModule));
     const config = {};
     for (const key of Object.keys(wrappedConsole)) {
@@ -357,9 +376,9 @@
       // then wrap these two methods into one. Native wrapper will preserve
       // the original stack.
       wrappedConsole[key] = consoleCall.bind(wrappedConsole,
-                                             originalConsole[key],
-                                             wrappedConsole[key],
-                                             config);
+        originalConsole[key],
+        wrappedConsole[key],
+        config);
     }
     for (const key of Object.keys(originalConsole)) {
       if (wrappedConsole.hasOwnProperty(key))
@@ -371,11 +390,20 @@
   function setupProcessFatal() {
     const async_wrap = process.binding('async_wrap');
     // Arrays containing hook flags and ids for async_hook calls.
-    const { async_hook_fields, async_id_fields } = async_wrap;
+    const {
+      async_hook_fields,
+      async_id_fields
+    } = async_wrap;
     // Internal functions needed to manipulate the stack.
-    const { clearAsyncIdStack } = async_wrap;
-    const { kAfter, kExecutionAsyncId,
-            kDefaultTriggerAsyncId, kStackLength } = async_wrap.constants;
+    const {
+      clearAsyncIdStack
+    } = async_wrap;
+    const {
+      kAfter,
+      kExecutionAsyncId,
+      kDefaultTriggerAsyncId,
+      kStackLength
+    } = async_wrap.constants;
 
     process._fatalException = function(er) {
       var caught;
@@ -412,7 +440,7 @@
             NativeModule.require('internal/async_hooks').emitAfter(
               async_id_fields[kExecutionAsyncId]);
           } while (async_hook_fields[kStackLength] > 0);
-        // Or completely empty the id stack.
+          // Or completely empty the id stack.
         } else {
           clearAsyncIdStack();
         }
@@ -425,7 +453,7 @@
   function setupProcessICUVersions() {
     const icu = process.binding('config').hasIntl ?
       process.binding('icu') : undefined;
-    if (!icu) return;  // no Intl/ICU: nothing to add here.
+    if (!icu) return; // no Intl/ICU: nothing to add here.
     // With no argument, getVersion() returns a comma separated list
     // of possible types.
     const versionTypes = icu.getVersion().split(',');
@@ -469,13 +497,13 @@
     module.paths = Module._nodeModulePaths(cwd);
     const body = wrapForBreakOnFirstLine(process._eval);
     const script = `global.__filename = ${JSON.stringify(name)};\n` +
-                   'global.exports = exports;\n' +
-                   'global.module = module;\n' +
-                   'global.__dirname = __dirname;\n' +
-                   'global.require = require;\n' +
-                   'return require("vm").runInThisContext(' +
-                   `${JSON.stringify(body)}, { filename: ` +
-                   `${JSON.stringify(name)}, displayErrors: true });\n`;
+      'global.exports = exports;\n' +
+      'global.module = module;\n' +
+      'global.__dirname = __dirname;\n' +
+      'global.require = require;\n' +
+      'return require("vm").runInThisContext(' +
+      `${JSON.stringify(body)}, { filename: ` +
+      `${JSON.stringify(name)}, displayErrors: true });\n`;
     const result = module._compile(script, `${name}-wrapper`);
     if (process._print_eval) console.log(result);
     // Handle any nextTicks added in the first tick of the program.
@@ -501,7 +529,10 @@
     // wrap it
     source = Module.wrap(source);
     // compile the script, this will throw if it fails
-    new vm.Script(source, { displayErrors: true, filename });
+    new vm.Script(source, {
+      displayErrors: true,
+      filename
+    });
   }
 
   // Below you find a minimal module system, which is used to load the node
@@ -509,6 +540,7 @@
   // node binary, so they can be loaded faster.
 
   const ContextifyScript = process.binding('contextify').ContextifyScript;
+
   function runInThisContext(code, options) {
     const script = new ContextifyScript(code, options);
     return script.runInThisContext();
@@ -583,7 +615,6 @@
       return id.startsWith('internal/');
     };
   }
-
 
   NativeModule.getSource = function(id) {
     return NativeModule._source[id];
