@@ -4,7 +4,7 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/fsuhe9x6mamohuym/branch/master?svg=true)](https://ci.appveyor.com/project/slee047/node-packer/branch/master)
 [![Status](https://travis-ci.org/slee047/node-packer.svg?branch=master)](https://travis-ci.org/slee047/node-packer)
-[![GitHub version](https://img.shields.io/badge/version-1.6.0%20(8.16.1)-blue.svg)](https://badge.fury.io/gh/slee047%2Fnode-packer)
+[![GitHub version](https://img.shields.io/badge/version-1.6.0%20(8.16.2)-blue.svg)](https://badge.fury.io/gh/slee047%2Fnode-packer)
 
 ![Terminal simulation of a simple compilation](https://github.com/pmq20/node-compiler/raw/master/doc/nodec.gif)
 

@@ -1,8 +1,8 @@
 language: node_js
 env:
     global:
-        - NODEVER=8.16.1
-        - RUBY_VER=2.6.3
+        - NODEVER=8.16.2
+        - RUBY_VER=2.6.5
         - arch=x64
         - mode=release
         - NODEC_TESTS_TMPDIR=/tmp/nodec_tests_tmpdir
