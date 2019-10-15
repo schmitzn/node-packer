@@ -2,7 +2,7 @@
 
 *Packing your Node.js application into a single executable.*
 
-[![Build status](https://ci.appveyor.com/api/projects/status/fsuhe9x6mamohuym/branch/Series8?svg=true)](https://ci.appveyor.com/project/slee047/node-packer/branch/Series8)
+[![Build status](https://ci.appveyor.com/api/projects/status/fsuhe9x6mamohuym?svg=true)](https://ci.appveyor.com/project/slee047/node-packer/)
 [![Status](https://travis-ci.org/slee047/node-packer.svg?branch=Series8)](https://travis-ci.org/slee047/node-packer)
 [![GitHub version](https://img.shields.io/badge/version-1.6.0%20(8.16.2)-blue.svg)](https://badge.fury.io/gh/slee047%2Fnode-packer)
 
