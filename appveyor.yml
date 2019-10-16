@@ -6,7 +6,7 @@ environment:
   DEPEND_DIR: C:\dependencies
   PRJROOT_DIR: C:\projects\node-packer
   NODEC_TESTS_TMPDIR: C:\tmp
-  NODEC_NODE: 8.16.1
+  NODEC_NODE: 8.16.2
   GYP_MSVS_VERSION: 2017
   mode: release
   arch: x64
@@ -14,8 +14,6 @@ environment:
     - TEST_SCRIPT: coffeescript_1
     - TEST_SCRIPT: coffeescript_2
     - TEST_SCRIPT: datetime
-cache:
-  - node_modules
 
 build_script:
 - ps: |
@@ -45,7 +43,7 @@ build_script:
 
 test_script:
 - cmd: |
-    set PATH=%DEPEND_DIR%\node-v%NODEC_NODE%-win-%arch%;%DEPEND_DIR%\usr\bin;%PATH%
+    set PATH=%DEPEND_DIR%\usr\bin\node-v%NODEC_NODE%-win-%arch%;%DEPEND_DIR%\usr\bin;%PATH%
 
     npm install npm-cli -g
 
