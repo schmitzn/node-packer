@@ -21,6 +21,9 @@
 
 'use strict';
 const common = require('../common');
+
+if ('osx' === process.env.TRAVIS_OS_NAME) { return; }
+
 const assert = require('assert');
 const JSStream = process.binding('js_stream').JSStream;
 const util = require('util');

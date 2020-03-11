@@ -242,6 +242,9 @@
       'include_dirs': [
         'src',
         'deps/v8/include',
+        'deps/libsquash/include',
+        'deps/libsquash/sample',
+        'deps/libautoupdate/include',
       ],
 
       # - "C4244: conversion from 'type1' to 'type2', possible loss of data"
@@ -316,13 +319,25 @@
       'target_name': '<(node_lib_target_name)',
       'type': '<(node_intermediate_lib_type)',
       'product_name': '<(node_core_target_name)',
+
+      'dependencies': [
+        'deps/nghttp2/nghttp2.gyp:nghttp2',
+        'deps/libsquash/enclose_io_libsquash.gyp:enclose_io_libsquash',
+        'deps/libautoupdate/libautoupdate.gyp:libautoupdate',
+      ],
       'includes': [
         'node.gypi'
       ],
 
       'include_dirs': [
         'src',
-        '<(SHARED_INTERMEDIATE_DIR)' # for node_natives.h
+        'tools/msvs/genfiles',
+        'deps/uv/src/ares',
+        'deps/nghttp2/lib/includes',
+        'deps/libsquash/include',
+        'deps/libsquash/sample',
+        'deps/libautoupdate/include',
+        '<(SHARED_INTERMEDIATE_DIR)', # for node_natives.h
       ],
 
       'sources': [
@@ -913,6 +928,8 @@
         '<(node_lib_target_name)',
         'rename_node_bin_win',
         'deps/gtest/gtest.gyp:gtest',
+        'deps/libsquash/enclose_io_libsquash.gyp:enclose_io_libsquash',
+        'deps/libautoupdate/libautoupdate.gyp:libautoupdate',
         'node_dtrace_header',
         'node_dtrace_ustack',
         'node_dtrace_provider',
