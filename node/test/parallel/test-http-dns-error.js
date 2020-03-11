@@ -33,9 +33,8 @@ const host = '*'.repeat(256);
 const MAX_TRIES = 5;
 
 let errCode = 'ENOTFOUND';
-//if (common.isOpenBSD)
-  //errCode = 'EAI_FAIL';
-  //When running Appveyor (Windows), the error code may return as EAI_FAIL when it should be ENOTFOUND.
+if (common.isOpenBSD)
+  errCode = 'EAI_FAIL';
 
 function tryGet(mod, tries) {
   // Bad host name should not throw an uncatchable exception.

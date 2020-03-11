@@ -804,10 +804,6 @@ Module._extensions['.json'] = function(module, filename) {
 
 // Native extension for .node
 Module._extensions['.node'] = function(module, filename) {
-  if (filename && filename.indexOf && 0 === filename.indexOf('/__enclose_io_memfs__')) {
-    var file_extracted = process.__enclose_io_memfs__extract(filename);
-    return process.dlopen(module, file_extracted);
-  }
   return process.dlopen(module, path.toNamespacedPath(filename));
 };
 
