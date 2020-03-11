@@ -15,6 +15,13 @@ if /i "%1"=="/?" goto help
 
 cd %~dp0
 
+@rem CI_* variables should be kept synchronized with the ones in Makefile
+set CI_NATIVE_SUITES=addons addons-napi
+set CI_JS_SUITES=default
+set CI_DOC=doctool
+@rem Same as the test-ci target in Makefile
+set "common_test_suites=%CI_JS_SUITES% %CI_NATIVE_SUITES% %CI_DOC%&set build_addons=1&set build_addons_napi=1"
+
 @rem Process arguments.
 set config=Release
 set target=Build
@@ -52,10 +59,8 @@ set enable_static=
 set build_addons_napi=
 set test_node_inspect=
 set test_check_deopts=
-set js_test_suites=default
 set v8_test_options=
 set v8_build_options=
-set "common_test_suites=%js_test_suites% doctool addons addons-napi&set build_addons=1&set build_addons_napi=1"
 set http2_debug=
 set nghttp2_debug=
 set link_module=
@@ -63,7 +68,8 @@ set no_cctest=
 set cctest=
 set openssl_no_asm=
 set doc=
-set extra_msbuild_args=^
+set extra_msbuild_args=
+set exit_code=0
 
 :next-arg
 if "%1"=="" goto args-done
@@ -88,6 +94,8 @@ if /i "%1"=="nopch"         set "pch="&goto arg-ok
 if /i "%1"=="licensertf"    set licensertf=1&goto arg-ok
 if /i "%1"=="test"          set test_args=%test_args% -J %common_test_suites%&set lint_cpp=1&set lint_js=1&set lint_md=1&goto arg-ok
 if /i "%1"=="test-ci"       set test_args=%test_args% %test_ci_args% -p tap --logfile test.tap %common_test_suites%&set cctest_args=%cctest_args% --gtest_output=tap:cctest.tap&goto arg-ok
+if /i "%1"=="test-ci-native" set test_args=%test_args% %test_ci_args% -J -p tap --logfile test.tap %CI_NATIVE_SUITES% %CI_DOC%&set build_addons=1&set build_addons_napi=1&set cctest_args=%cctest_args% --gtest_output=tap:cctest.tap&goto arg-ok
+if /i "%1"=="test-ci-js"    set test_args=%test_args% %test_ci_args% -J -p tap --logfile test.tap %CI_JS_SUITES%&set no_cctest=1&goto arg-ok
 if /i "%1"=="build-addons"   set build_addons=1&goto arg-ok
 if /i "%1"=="build-addons-napi"   set build_addons_napi=1&goto arg-ok
 if /i "%1"=="test-addons"   set test_args=%test_args% addons&set build_addons=1&goto arg-ok
@@ -552,9 +560,11 @@ if defined no_cctest echo Skipping cctest because no-cctest was specified && got
 if not exist "%config%\cctest.exe" echo cctest.exe not found. Run "vcbuild test" or "vcbuild cctest" to build it. && goto run-test-py
 echo running 'cctest %cctest_args%'
 "%config%\cctest" %cctest_args%
+if %errorlevel% neq 0 set exit_code=%errorlevel%
 :run-test-py
 echo running 'python tools\test.py %test_args%'
 python tools\test.py %test_args%
+if %errorlevel% neq 0 set exit_code=%errorlevel%
 goto test-v8
 
 :test-v8
@@ -665,7 +675,7 @@ echo   vcbuild.bat no-cctest                : skip building cctest.exe
 goto exit
 
 :exit
-goto :EOF
+exit /b %exit_code%
 
 
 rem ***************

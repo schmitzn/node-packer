@@ -33,7 +33,7 @@
 
     # Reset this number to 0 on major V8 upgrades.
     # Increment by one for each non-official patch applied to deps/v8.
-    'v8_embedder_string': '-node.54',
+    'v8_embedder_string': '-node.55',
 
     # Enable disassembler for `--print-code` v8 options
     'v8_enable_disassembler': 1,
@@ -521,7 +521,19 @@
         'ldflags': [
           '-Wl,--export-dynamic',
         ],
-      }]
+      }],
+      # if node is built as an executable,
+      #      the openssl mechanism for keeping itself "dload"-ed to ensure proper
+      #      atexit cleanup does not apply
+      ['node_shared_openssl!="true" and node_shared!="true"', {
+        'defines': [
+          # `OPENSSL_NO_PINSHARED` prevents openssl from dload
+          #      current node executable,
+          #      see https://github.com/nodejs/node/pull/21848
+          #      or https://github.com/nodejs/node/issues/27925
+          'OPENSSL_NO_PINSHARED'
+        ],
+      }],
     ],
   }
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>Stream | Node.js v10.16.3 Documentation</title>
+  <title>Stream | Node.js v10.19.0 Documentation</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic">
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/sh.css">
@@ -79,7 +79,7 @@
 
     <div id="column1" data-id="stream" class="interior">
       <header>
-        <h1>Node.js v10.16.3 Documentation</h1>
+        <h1>Node.js v10.19.0 Documentation</h1>
         <div id="gtoc">
           <ul>
             <li>
@@ -175,6 +175,7 @@
 <li><a href="#stream_readable_pipe_destination_options">readable.pipe(destination[, options])</a></li>
 <li><a href="#stream_readable_read_size">readable.read([size])</a></li>
 <li><a href="#stream_readable_readable">readable.readable</a></li>
+<li><a href="#stream_readable_readableflowing">readable.readableFlowing</a></li>
 <li><a href="#stream_readable_readablehighwatermark">readable.readableHighWaterMark</a></li>
 <li><a href="#stream_readable_readablelength">readable.readableLength</a></li>
 <li><a href="#stream_readable_resume">readable.resume()</a></li>
@@ -182,7 +183,7 @@
 <li><a href="#stream_readable_unpipe_destination">readable.unpipe([destination])</a></li>
 <li><a href="#stream_readable_unshift_chunk">readable.unshift(chunk)</a></li>
 <li><a href="#stream_readable_wrap_stream">readable.wrap(stream)</a></li>
-<li><span class="stability_1"><a href="#stream_readable_symbol_asynciterator">readable[Symbol.asyncIterator]()</a></span></li>
+<li><span class="stability_2"><a href="#stream_readable_symbol_asynciterator">readable[Symbol.asyncIterator]()</a></span></li>
 </ul>
 </li>
 </ul>
@@ -201,6 +202,7 @@
 </li>
 <li><a href="#stream_stream_finished_stream_callback">stream.finished(stream, callback)</a></li>
 <li><a href="#stream_stream_pipeline_streams_callback">stream.pipeline(...streams[, callback])</a></li>
+<li><a href="#stream_readable_from_iterable_options">Readable.from(iterable, [options])</a></li>
 </ul>
 </li>
 <li>
@@ -254,6 +256,14 @@
 <li>
 <p><a href="#stream_additional_notes">Additional Notes</a></p>
 <ul>
+<li>
+<p><a href="#stream_streams_compatibility_with_async_generators_and_async_iterators">Streams Compatibility with Async Generators and Async Iterators</a></p>
+<ul>
+<li><a href="#stream_consuming_readable_streams_with_async_iterators">Consuming Readable Streams with Async Iterators</a></li>
+<li><a href="#stream_creating_readable_streams_with_async_generators">Creating Readable Streams with Async Generators</a></li>
+<li><a href="#stream_piping_to_writable_streams_from_async_iterators">Piping to Writable Streams from Async Iterators</a></li>
+</ul>
+</li>
 <li><a href="#stream_compatibility_with_older_node_js_versions">Compatibility with Older Node.js Versions</a></li>
 <li><a href="#stream_readable_read_0"><code>readable.read(0)</code></a></li>
 <li><a href="#stream_readable_push"><code>readable.push('')</code></a></li>
@@ -266,7 +276,7 @@
       </div>
 
       <div id="apicontent">
-        <h1>Stream<a class="srclink" href="https://github.com/nodejs/node/blob/75657ee41677d56a498e298b01d049aef5bf199f/lib/stream.js#L30">[src]</a><span><a class="mark" href="#stream_stream" id="stream_stream">#</a></span></h1>
+        <h1>Stream<a class="srclink" href="https://github.com/nodejs/node/blob/5ba7df3c4b81ab695029dacf34a0aa960be71372/lib/stream.js#L30">[src]</a><span><a class="mark" href="#stream_stream" id="stream_stream">#</a></span></h1>
 
 <p></p><div class="api_stability api_stability_2"><a href="documentation.html#documentation_stability_index">Stability: 2</a> - Stable</div><p></p>
 <p>A stream is an abstract interface for working with streaming data in Node.js.
@@ -301,8 +311,8 @@ the elements of the API that are required to <em>implement</em> new types of str
 <li><a href="#stream_class_stream_transform"><code>Transform</code></a> - <code>Duplex</code> streams that can modify or transform the data as it
 is written and read (for example, <a href="zlib.html#zlib_zlib_createdeflate_options"><code>zlib.createDeflate()</code></a>).</li>
 </ul>
-<p>Additionally, this module includes the utility functions <a href="#stream_stream_pipeline_streams_callback">pipeline</a> and
-<a href="#stream_stream_finished_stream_callback">finished</a>.</p>
+<p>Additionally, this module includes the utility functions <a href="#stream_stream_pipeline_streams_callback">pipeline</a>,
+<a href="#stream_stream_finished_stream_callback">finished</a> and <a href="#readable.from">Readable.from</a>.</p>
 <h3>Object Mode<span><a class="mark" href="#stream_object_mode" id="stream_object_mode">#</a></span></h3>
 <p>All streams created by Node.js APIs operate exclusively on strings and <code>Buffer</code>
 (or <code>Uint8Array</code>) objects. It is possible, however, for stream implementations
@@ -1133,6 +1143,7 @@ the stream has ended, in which case all of the data remaining in the internal
 buffer will be returned.</p>
 <p>If the <code>size</code> argument is not specified, all of the data contained in the
 internal buffer will be returned.</p>
+<p>The <code>size</code> argument must be less than or equal to 1 GB.</p>
 <p>The <code>readable.read()</code> method should only be called on <code>Readable</code> streams
 operating in paused mode. In flowing mode, <code>readable.read()</code> is called
 automatically until the internal buffer is fully drained.</p>
@@ -1162,6 +1173,15 @@ been emitted will return <code>null</code>. No runtime error will be raised.</p>
 <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type" class="type">&#x3C;boolean></a></li>
 </ul>
 <p>Is <code>true</code> if it is safe to call [<code>readable.read()</code>][].</p>
+<h5>readable.readableFlowing<span><a class="mark" href="#stream_readable_readableflowing" id="stream_readable_readableflowing">#</a></span></h5>
+<div class="api_metadata">
+<span>Added in: v9.4.0</span>
+</div>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type" class="type">&#x3C;boolean></a></li>
+</ul>
+<p>This property reflects the current state of a <code>Readable</code> stream as described
+in the <a href="#stream_three_states">Stream Three States</a> section.</p>
 <h5>readable.readableHighWaterMark<span><a class="mark" href="#stream_readable_readablehighwatermark" id="stream_readable_readablehighwatermark">#</a></span></h5>
 <div class="api_metadata">
 <span>Added in: v9.3.0</span>
@@ -1358,9 +1378,17 @@ myReader.on('readable', () => {
 </code></pre>
 <h5>readable[Symbol.asyncIterator]()<span><a class="mark" href="#stream_readable_symbol_asynciterator" id="stream_readable_symbol_asynciterator">#</a></span></h5>
 <div class="api_metadata">
-<span>Added in: v10.0.0</span>
+<details class="changelog"><summary>History</summary>
+<table>
+<tbody><tr><th>Version</th><th>Changes</th></tr>
+<tr><td>v10.17.0</td>
+<td><p>Symbol.asyncIterator support is no longer experimental.</p></td></tr>
+<tr><td>v10.0.0</td>
+<td><p><span>Added in: v10.0.0</span></p></td></tr>
+</tbody></table>
+</details>
 </div>
-<p></p><div class="api_stability api_stability_1"><a href="documentation.html#documentation_stability_index">Stability: 1</a> - Experimental</div><p></p>
+<p></p><div class="api_stability api_stability_2"><a href="documentation.html#documentation_stability_index">Stability: 2</a> - Stable</div><p></p>
 <ul>
 <li>Returns: <a href="https://tc39.github.io/ecma262/#sec-asynciterator-interface" class="type">&#x3C;AsyncIterator></a> to fully consume the stream.</li>
 </ul>
@@ -1517,6 +1545,28 @@ async function run() {
 }
 
 run().catch(console.error);
+</code></pre>
+<h3>Readable.from(iterable, [options])<span><a class="mark" href="#stream_readable_from_iterable_options" id="stream_readable_from_iterable_options">#</a></span></h3>
+<ul>
+<li><code>iterable</code> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterable_protocol" class="type">&#x3C;Iterable></a> Object implementing the <code>Symbol.asyncIterator</code> or
+<code>Symbol.iterator</code> iterable protocol.</li>
+<li><code>options</code> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object" class="type">&#x3C;Object></a> Options provided to <code>new stream.Readable([options])</code>.
+By default, <code>Readable.from()</code> will set <code>options.objectMode</code> to <code>true</code>, unless
+this is explicitly opted out by setting <code>options.objectMode</code> to <code>false</code>.</li>
+</ul>
+<p>A utility method for creating Readable Streams out of iterators.</p>
+<pre><code class="language-js">const { Readable } = require('stream');
+
+async function * generate() {
+  yield 'hello';
+  yield 'streams';
+}
+
+const readable = Readable.from(generate());
+
+readable.on('data', (chunk) => {
+  console.log(chunk);
+});
 </code></pre>
 <h2>API for Stream Implementers<span><a class="mark" href="#stream_api_for_stream_implementers" id="stream_api_for_stream_implementers">#</a></span></h2>
 
@@ -2348,6 +2398,70 @@ stream that simply passes the input bytes across to the output. Its purpose is
 primarily for examples and testing, but there are some use cases where
 <code>stream.PassThrough</code> is useful as a building block for novel sorts of streams.</p>
 <h2>Additional Notes<span><a class="mark" href="#stream_additional_notes" id="stream_additional_notes">#</a></span></h2>
+
+<h3>Streams Compatibility with Async Generators and Async Iterators<span><a class="mark" href="#stream_streams_compatibility_with_async_generators_and_async_iterators" id="stream_streams_compatibility_with_async_generators_and_async_iterators">#</a></span></h3>
+<p>With the support of async generators and iterators in JavaScript, async
+generators are effectively a first-class language-level stream construct at
+this point.</p>
+<p>Some common interop cases of using Node.js streams with async generators
+and async iterators are provided below.</p>
+<h4>Consuming Readable Streams with Async Iterators<span><a class="mark" href="#stream_consuming_readable_streams_with_async_iterators" id="stream_consuming_readable_streams_with_async_iterators">#</a></span></h4>
+<pre><code class="language-js">(async function() {
+  for await (const chunk of readable) {
+    console.log(chunk);
+  }
+})();
+</code></pre>
+<h4>Creating Readable Streams with Async Generators<span><a class="mark" href="#stream_creating_readable_streams_with_async_generators" id="stream_creating_readable_streams_with_async_generators">#</a></span></h4>
+<p>We can construct a Node.js Readable Stream from an asynchronous generator
+using the <code>Readable.from</code> utility method:</p>
+<pre><code class="language-js">const { Readable } = require('stream');
+
+async function * generate() {
+  yield 'a';
+  yield 'b';
+  yield 'c';
+}
+
+const readable = Readable.from(generate());
+
+readable.on('data', (chunk) => {
+  console.log(chunk);
+});
+</code></pre>
+<h4>Piping to Writable Streams from Async Iterators<span><a class="mark" href="#stream_piping_to_writable_streams_from_async_iterators" id="stream_piping_to_writable_streams_from_async_iterators">#</a></span></h4>
+<p>In the scenario of writing to a writeable stream from an async iterator,
+it is important to ensure the correct handling of backpressure and errors.</p>
+<pre><code class="language-js">const { once } = require('events');
+
+const writeable = fs.createWriteStream('./file');
+
+(async function() {
+  for await (const chunk of iterator) {
+    // Handle backpressure on write
+    if (!writeable.write(value))
+      await once(writeable, 'drain');
+  }
+  writeable.end();
+  // Ensure completion without errors
+  await once(writeable, 'finish');
+})();
+</code></pre>
+<p>In the above, errors on the write stream would be caught and thrown by the two
+<code>once</code> listeners, since <code>once</code> will also handle <code>'error'</code> events.</p>
+<p>Alternatively the readable stream could be wrapped with <code>Readable.from</code> and
+then piped via <code>.pipe</code>:</p>
+<pre><code class="language-js">const { once } = require('events');
+
+const writeable = fs.createWriteStream('./file');
+
+(async function() {
+  const readable = Readable.from(iterator);
+  readable.pipe(writeable);
+  // Ensure completion without errors
+  await once(writeable, 'finish');
+})();
+</code></pre>
 
 <h3>Compatibility with Older Node.js Versions<span><a class="mark" href="#stream_compatibility_with_older_node_js_versions" id="stream_compatibility_with_older_node_js_versions">#</a></span></h3>
 

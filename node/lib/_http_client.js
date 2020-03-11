@@ -31,6 +31,7 @@ const {
   debug,
   freeParser,
   httpSocketSetup,
+  isLenient,
   parsers
 } = require('_http_common');
 const { OutgoingMessage } = require('_http_outgoing');
@@ -145,6 +146,14 @@ function ClientRequest(input, options, cb) {
   } else {
     method = this.method = 'GET';
   }
+
+  const insecureHTTPParser = options.insecureHTTPParser;
+  if (insecureHTTPParser !== undefined &&
+      typeof insecureHTTPParser !== 'boolean') {
+    throw new ERR_INVALID_ARG_TYPE(
+      'insecureHTTPParser', 'boolean', insecureHTTPParser);
+  }
+  this.insecureHTTPParser = insecureHTTPParser;
 
   this.path = options.path || '/';
   if (cb) {
@@ -626,7 +635,9 @@ function tickOnSocket(req, socket) {
   var parser = parsers.alloc();
   req.socket = socket;
   req.connection = socket;
-  parser.reinitialize(HTTPParser.RESPONSE, parser[is_reused_symbol]);
+  parser.reinitialize(HTTPParser.RESPONSE, parser[is_reused_symbol],
+                      req.insecureHTTPParser === undefined ?
+                        isLenient() : req.insecureHTTPParser);
   parser.socket = socket;
   parser.outgoing = req;
   req.parser = parser;

@@ -1089,10 +1089,14 @@ class ThreadSafeFunction : public node::AsyncResource {
                                "ERR_NAPI_TSFN_STOP_IDLE_LOOP",
                                "Failed to stop the idle loop") == napi_ok);
       } else {
-        v8::Local<v8::Function> js_cb =
+        napi_value js_callback = nullptr;
+        if (!ref.IsEmpty()) {
+          v8::Local<v8::Function> js_cb =
             v8::Local<v8::Function>::New(env->isolate, ref);
+          js_callback = v8impl::JsValueFromV8LocalValue(js_cb);
+        }
         call_js_cb(env,
-                   v8impl::JsValueFromV8LocalValue(js_cb),
+                   js_callback,
                    context,
                    data);
       }
@@ -1376,6 +1380,7 @@ const char* error_messages[] = {nullptr,
                                 "Thread-safe function queue is full",
                                 "Thread-safe function handle is closing",
                                 "A bigint was expected",
+                                "A date was expected",
 };
 
 static inline napi_status napi_clear_last_error(napi_env env) {
@@ -1402,14 +1407,16 @@ napi_status napi_get_last_error_info(napi_env env,
   CHECK_ENV(env);
   CHECK_ARG(env, result);
 
-  // you must update this assert to reference the last message
-  // in the napi_status enum each time a new error message is added.
+  // The value of the constant below must be updated to reference the last
+  // message in the `napi_status` enum each time a new error message is added.
   // We don't have a napi_status_last as this would result in an ABI
   // change each time a message was added.
+  const int last_status = napi_date_expected;
+
   static_assert(
-      node::arraysize(error_messages) == napi_bigint_expected + 1,
+      node::arraysize(error_messages) == last_status + 1,
       "Count of error messages must match count of error values");
-  CHECK_LE(env->last_error.error_code, napi_callback_scope_mismatch);
+  CHECK_LE(env->last_error.error_code, last_status);
 
   // Wait until someone requests the last error information to fetch the error
   // message string
@@ -4085,6 +4092,48 @@ napi_status napi_is_promise(napi_env env,
   return napi_clear_last_error(env);
 }
 
+napi_status napi_create_date(napi_env env,
+                             double time,
+                             napi_value* result) {
+  NAPI_PREAMBLE(env);
+  CHECK_ARG(env, result);
+
+  v8::MaybeLocal<v8::Value> maybe_date = v8::Date::New(env->context(), time);
+  CHECK_MAYBE_EMPTY(env, maybe_date, napi_generic_failure);
+
+  *result = v8impl::JsValueFromV8LocalValue(maybe_date.ToLocalChecked());
+
+  return GET_RETURN_STATUS(env);
+}
+
+napi_status napi_is_date(napi_env env,
+                         napi_value value,
+                         bool* is_date) {
+  CHECK_ENV(env);
+  CHECK_ARG(env, value);
+  CHECK_ARG(env, is_date);
+
+  *is_date = v8impl::V8LocalValueFromJsValue(value)->IsDate();
+
+  return napi_clear_last_error(env);
+}
+
+napi_status napi_get_date_value(napi_env env,
+                                napi_value value,
+                                double* result) {
+  NAPI_PREAMBLE(env);
+  CHECK_ARG(env, value);
+  CHECK_ARG(env, result);
+
+  v8::Local<v8::Value> val = v8impl::V8LocalValueFromJsValue(value);
+  RETURN_STATUS_IF_FALSE(env, val->IsDate(), napi_date_expected);
+
+  v8::Local<v8::Date> date = val.As<v8::Date>();
+  *result = date->ValueOf();
+
+  return GET_RETURN_STATUS(env);
+}
+
 napi_status napi_run_script(napi_env env,
                             napi_value script,
                             napi_value* result) {
@@ -4125,7 +4174,6 @@ napi_create_threadsafe_function(napi_env env,
                                 napi_threadsafe_function_call_js call_js_cb,
                                 napi_threadsafe_function* result) {
   CHECK_ENV(env);
-  CHECK_ARG(env, func);
   CHECK_ARG(env, async_resource_name);
   RETURN_STATUS_IF_FALSE(env, initial_thread_count > 0, napi_invalid_arg);
   CHECK_ARG(env, result);
@@ -4133,7 +4181,11 @@ napi_create_threadsafe_function(napi_env env,
   napi_status status = napi_ok;
 
   v8::Local<v8::Function> v8_func;
-  CHECK_TO_FUNCTION(env, v8_func, func);
+  if (func == nullptr) {
+    CHECK_ARG(env, call_js_cb);
+  } else {
+    CHECK_TO_FUNCTION(env, v8_func, func);
+  }
 
   v8::Local<v8::Context> v8_context = env->context();
 

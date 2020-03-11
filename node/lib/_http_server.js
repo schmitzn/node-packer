@@ -34,6 +34,7 @@ const {
   chunkExpression,
   httpSocketSetup,
   kIncomingMessage,
+  isLenient,
   _checkInvalidHeaderChar: checkInvalidHeaderChar
 } = require('_http_common');
 const { OutgoingMessage } = require('_http_outgoing');
@@ -47,6 +48,7 @@ const { IncomingMessage } = require('_http_incoming');
 const {
   ERR_HTTP_HEADERS_SENT,
   ERR_HTTP_INVALID_STATUS_CODE,
+  ERR_INVALID_ARG_TYPE,
   ERR_INVALID_CHAR
 } = require('internal/errors').codes;
 const Buffer = require('buffer').Buffer;
@@ -269,6 +271,8 @@ function writeHead(statusCode, reason, obj) {
   }
 
   this._storeHeader(statusLine, headers);
+
+  return this;
 }
 
 // Docs-only deprecated: DEP0063
@@ -286,6 +290,14 @@ function Server(options, requestListener) {
 
   this[kIncomingMessage] = options.IncomingMessage || IncomingMessage;
   this[kServerResponse] = options.ServerResponse || ServerResponse;
+
+  const insecureHTTPParser = options.insecureHTTPParser;
+  if (insecureHTTPParser !== undefined &&
+      typeof insecureHTTPParser !== 'boolean') {
+    throw new ERR_INVALID_ARG_TYPE(
+      'insecureHTTPParser', 'boolean', insecureHTTPParser);
+  }
+  this.insecureHTTPParser = insecureHTTPParser;
 
   net.Server.call(this, { allowHalfOpen: true });
 
@@ -340,7 +352,9 @@ function connectionListenerInternal(server, socket) {
   socket.on('timeout', socketOnTimeout);
 
   var parser = parsers.alloc();
-  parser.reinitialize(HTTPParser.REQUEST, parser[is_reused_symbol]);
+  parser.reinitialize(HTTPParser.REQUEST, parser[is_reused_symbol],
+                      server.insecureHTTPParser === undefined ?
+                        isLenient() : server.insecureHTTPParser);
   parser.socket = socket;
 
   // We are starting to wait for our headers.

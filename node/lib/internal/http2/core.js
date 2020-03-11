@@ -422,23 +422,27 @@ function sessionListenerRemoved(name) {
 // Also keep track of listeners for the Http2Stream instances, as some events
 // are emitted on those objects.
 function streamListenerAdded(name) {
+  const session = this[kSession];
+  if (!session) return;
   switch (name) {
     case 'priority':
-      this[kSession][kNativeFields][kSessionPriorityListenerCount]++;
+      session[kNativeFields][kSessionPriorityListenerCount]++;
       break;
     case 'frameError':
-      this[kSession][kNativeFields][kSessionFrameErrorListenerCount]++;
+      session[kNativeFields][kSessionFrameErrorListenerCount]++;
       break;
   }
 }
 
 function streamListenerRemoved(name) {
+  const session = this[kSession];
+  if (!session) return;
   switch (name) {
     case 'priority':
-      this[kSession][kNativeFields][kSessionPriorityListenerCount]--;
+      session[kNativeFields][kSessionPriorityListenerCount]--;
       break;
     case 'frameError':
-      this[kSession][kNativeFields][kSessionFrameErrorListenerCount]--;
+      session[kNativeFields][kSessionFrameErrorListenerCount]--;
       break;
   }
 }
@@ -500,6 +504,7 @@ function onSettings() {
     return;
   session[kUpdateTimer]();
   debugSessionObj(session, 'new settings received');
+  session[kRemoteSettings] = undefined;
   session.emit('remoteSettings', session.remoteSettings);
 }
 

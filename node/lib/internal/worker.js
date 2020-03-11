@@ -479,33 +479,35 @@ function setupChild(evalScript) {
   originalFatalException = process._fatalException;
   process._fatalException = fatalException;
 
-  function fatalException(error) {
+  function fatalException(error, fromPromise) {
     debug(`[${threadId}] gets fatal exception`);
     let caught = false;
     try {
-      caught = originalFatalException.call(this, error);
+      caught = originalFatalException.call(this, error, fromPromise);
     } catch (e) {
       error = e;
     }
     debug(`[${threadId}] fatal exception caught = ${caught}`);
 
-    if (!caught) {
-      let serialized;
-      try {
-        serialized = serializeError(error);
-      } catch {}
-      debug(`[${threadId}] fatal exception serialized = ${!!serialized}`);
-      if (serialized)
-        port.postMessage({
-          type: messageTypes.ERROR_MESSAGE,
-          error: serialized
-        });
-      else
-        port.postMessage({ type: messageTypes.COULD_NOT_SERIALIZE_ERROR });
-      clearAsyncIdStack();
-
-      process.exit();
+    if (caught) {
+      return true;
     }
+
+    let serialized;
+    try {
+      serialized = serializeError(error);
+    } catch {}
+    debug(`[${threadId}] fatal exception serialized = ${!!serialized}`);
+    if (serialized)
+      port.postMessage({
+        type: messageTypes.ERROR_MESSAGE,
+        error: serialized
+      });
+    else
+      port.postMessage({ type: messageTypes.COULD_NOT_SERIALIZE_ERROR });
+    clearAsyncIdStack();
+
+    process.exit();
   }
 }
 

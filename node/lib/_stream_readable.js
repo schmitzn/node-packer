@@ -38,11 +38,11 @@ const {
   ERR_METHOD_NOT_IMPLEMENTED,
   ERR_STREAM_UNSHIFT_AFTER_END_EVENT
 } = require('internal/errors').codes;
-const { emitExperimentalWarning } = require('internal/util');
 
 // Lazy loaded to improve the startup performance.
 let StringDecoder;
 let createReadableStreamAsyncIterator;
+let from;
 
 util.inherits(Readable, Stream);
 
@@ -340,10 +340,11 @@ Readable.prototype.setEncoding = function(enc) {
   return this;
 };
 
-// Don't raise the hwm > 8MB
-const MAX_HWM = 0x800000;
+// Don't raise the hwm > 1GB
+const MAX_HWM = 0x40000000;
 function computeNewHighWaterMark(n) {
   if (n >= MAX_HWM) {
+    // TODO(ronag): Throw ERR_VALUE_OUT_OF_RANGE.
     n = MAX_HWM;
   } else {
     // Get the next highest power of 2 to prevent increasing hwm excessively in
@@ -1040,7 +1041,6 @@ Readable.prototype.wrap = function(stream) {
 };
 
 Readable.prototype[Symbol.asyncIterator] = function() {
-  emitExperimentalWarning('Readable[Symbol.asyncIterator]');
   if (createReadableStreamAsyncIterator === undefined) {
     createReadableStreamAsyncIterator =
       require('internal/streams/async_iterator');
@@ -1154,3 +1154,10 @@ function endReadableNT(state, stream) {
     }
   }
 }
+
+Readable.from = function(iterable, opts) {
+  if (from === undefined) {
+    from = require('internal/streams/from');
+  }
+  return from(Readable, iterable, opts);
+};

@@ -20,7 +20,7 @@
         {
           "textRaw": "Types of Streams",
           "name": "types_of_streams",
-          "desc": "<p>There are four fundamental stream types within Node.js:</p>\n<ul>\n<li><a href=\"#stream_class_stream_writable\"><code>Writable</code></a> - streams to which data can be written (for example,\n<a href=\"fs.html#fs_fs_createwritestream_path_options\"><code>fs.createWriteStream()</code></a>).</li>\n<li><a href=\"#stream_class_stream_readable\"><code>Readable</code></a> - streams from which data can be read (for example,\n<a href=\"fs.html#fs_fs_createreadstream_path_options\"><code>fs.createReadStream()</code></a>).</li>\n<li><a href=\"#stream_class_stream_duplex\"><code>Duplex</code></a> - streams that are both <code>Readable</code> and <code>Writable</code> (for example,\n<a href=\"net.html#net_class_net_socket\"><code>net.Socket</code></a>).</li>\n<li><a href=\"#stream_class_stream_transform\"><code>Transform</code></a> - <code>Duplex</code> streams that can modify or transform the data as it\nis written and read (for example, <a href=\"zlib.html#zlib_zlib_createdeflate_options\"><code>zlib.createDeflate()</code></a>).</li>\n</ul>\n<p>Additionally, this module includes the utility functions <a href=\"#stream_stream_pipeline_streams_callback\">pipeline</a> and\n<a href=\"#stream_stream_finished_stream_callback\">finished</a>.</p>",
+          "desc": "<p>There are four fundamental stream types within Node.js:</p>\n<ul>\n<li><a href=\"#stream_class_stream_writable\"><code>Writable</code></a> - streams to which data can be written (for example,\n<a href=\"fs.html#fs_fs_createwritestream_path_options\"><code>fs.createWriteStream()</code></a>).</li>\n<li><a href=\"#stream_class_stream_readable\"><code>Readable</code></a> - streams from which data can be read (for example,\n<a href=\"fs.html#fs_fs_createreadstream_path_options\"><code>fs.createReadStream()</code></a>).</li>\n<li><a href=\"#stream_class_stream_duplex\"><code>Duplex</code></a> - streams that are both <code>Readable</code> and <code>Writable</code> (for example,\n<a href=\"net.html#net_class_net_socket\"><code>net.Socket</code></a>).</li>\n<li><a href=\"#stream_class_stream_transform\"><code>Transform</code></a> - <code>Duplex</code> streams that can modify or transform the data as it\nis written and read (for example, <a href=\"zlib.html#zlib_zlib_createdeflate_options\"><code>zlib.createDeflate()</code></a>).</li>\n</ul>\n<p>Additionally, this module includes the utility functions <a href=\"#stream_stream_pipeline_streams_callback\">pipeline</a>,\n<a href=\"#stream_stream_finished_stream_callback\">finished</a> and <a href=\"#readable.from\">Readable.from</a>.</p>",
           "modules": [
             {
               "textRaw": "Object Mode",
@@ -103,6 +103,31 @@
             }
           ],
           "desc": "<p>A module method to pipe between streams forwarding errors and properly cleaning\nup and provide a callback when the pipeline is complete.</p>\n<pre><code class=\"language-js\">const { pipeline } = require('stream');\nconst fs = require('fs');\nconst zlib = require('zlib');\n\n// Use the pipeline API to easily pipe a series of streams\n// together and get notified when the pipeline is fully done.\n\n// A pipeline to gzip a potentially huge tar file efficiently:\n\npipeline(\n  fs.createReadStream('archive.tar'),\n  zlib.createGzip(),\n  fs.createWriteStream('archive.tar.gz'),\n  (err) => {\n    if (err) {\n      console.error('Pipeline failed.', err);\n    } else {\n      console.log('Pipeline succeeded.');\n    }\n  }\n);\n</code></pre>\n<p>The <code>pipeline</code> API is promisify-able as well:</p>\n<pre><code class=\"language-js\">const pipeline = util.promisify(stream.pipeline);\n\nasync function run() {\n  await pipeline(\n    fs.createReadStream('archive.tar'),\n    zlib.createGzip(),\n    fs.createWriteStream('archive.tar.gz')\n  );\n  console.log('Pipeline succeeded.');\n}\n\nrun().catch(console.error);\n</code></pre>"
+        },
+        {
+          "textRaw": "Readable.from(iterable, [options])",
+          "type": "method",
+          "name": "from",
+          "signatures": [
+            {
+              "params": [
+                {
+                  "textRaw": "`iterable` {Iterable} Object implementing the `Symbol.asyncIterator` or `Symbol.iterator` iterable protocol.",
+                  "name": "iterable",
+                  "type": "Iterable",
+                  "desc": "Object implementing the `Symbol.asyncIterator` or `Symbol.iterator` iterable protocol."
+                },
+                {
+                  "textRaw": "`options` {Object} Options provided to `new stream.Readable([options])`. By default, `Readable.from()` will set `options.objectMode` to `true`, unless this is explicitly opted out by setting `options.objectMode` to `false`.",
+                  "name": "options",
+                  "type": "Object",
+                  "desc": "Options provided to `new stream.Readable([options])`. By default, `Readable.from()` will set `options.objectMode` to `true`, unless this is explicitly opted out by setting `options.objectMode` to `false`.",
+                  "optional": true
+                }
+              ]
+            }
+          ],
+          "desc": "<p>A utility method for creating Readable Streams out of iterators.</p>\n<pre><code class=\"language-js\">const { Readable } = require('stream');\n\nasync function * generate() {\n  yield 'hello';\n  yield 'streams';\n}\n\nconst readable = Readable.from(generate());\n\nreadable.on('data', (chunk) => {\n  console.log(chunk);\n});\n</code></pre>"
         }
       ],
       "miscs": [
@@ -767,7 +792,7 @@
                           ]
                         }
                       ],
-                      "desc": "<p>The <code>readable.read()</code> method pulls some data out of the internal buffer and\nreturns it. If no data available to be read, <code>null</code> is returned. By default,\nthe data will be returned as a <code>Buffer</code> object unless an encoding has been\nspecified using the <code>readable.setEncoding()</code> method or the stream is operating\nin object mode.</p>\n<p>The optional <code>size</code> argument specifies a specific number of bytes to read. If\n<code>size</code> bytes are not available to be read, <code>null</code> will be returned <em>unless</em>\nthe stream has ended, in which case all of the data remaining in the internal\nbuffer will be returned.</p>\n<p>If the <code>size</code> argument is not specified, all of the data contained in the\ninternal buffer will be returned.</p>\n<p>The <code>readable.read()</code> method should only be called on <code>Readable</code> streams\noperating in paused mode. In flowing mode, <code>readable.read()</code> is called\nautomatically until the internal buffer is fully drained.</p>\n<pre><code class=\"language-js\">const readable = getReadableStreamSomehow();\nreadable.on('readable', () => {\n  let chunk;\n  while (null !== (chunk = readable.read())) {\n    console.log(`Received ${chunk.length} bytes of data.`);\n  }\n});\n</code></pre>\n<p>Note that the <code>while</code> loop is necessary when processing data with\n<code>readable.read()</code>. Only after <code>readable.read()</code> returns <code>null</code>,\n<a href=\"\"><code>'readable'</code></a> will be emitted.</p>\n<p>A <code>Readable</code> stream in object mode will always return a single item from\na call to <a href=\"#stream_readable_read_size\"><code>readable.read(size)</code></a>, regardless of the value of the\n<code>size</code> argument.</p>\n<p>If the <code>readable.read()</code> method returns a chunk of data, a <code>'data'</code> event will\nalso be emitted.</p>\n<p>Calling <a href=\"#stream_readable_read_size\"><code>stream.read([size])</code></a> after the <a href=\"#stream_event_end\"><code>'end'</code></a> event has\nbeen emitted will return <code>null</code>. No runtime error will be raised.</p>"
+                      "desc": "<p>The <code>readable.read()</code> method pulls some data out of the internal buffer and\nreturns it. If no data available to be read, <code>null</code> is returned. By default,\nthe data will be returned as a <code>Buffer</code> object unless an encoding has been\nspecified using the <code>readable.setEncoding()</code> method or the stream is operating\nin object mode.</p>\n<p>The optional <code>size</code> argument specifies a specific number of bytes to read. If\n<code>size</code> bytes are not available to be read, <code>null</code> will be returned <em>unless</em>\nthe stream has ended, in which case all of the data remaining in the internal\nbuffer will be returned.</p>\n<p>If the <code>size</code> argument is not specified, all of the data contained in the\ninternal buffer will be returned.</p>\n<p>The <code>size</code> argument must be less than or equal to 1 GB.</p>\n<p>The <code>readable.read()</code> method should only be called on <code>Readable</code> streams\noperating in paused mode. In flowing mode, <code>readable.read()</code> is called\nautomatically until the internal buffer is fully drained.</p>\n<pre><code class=\"language-js\">const readable = getReadableStreamSomehow();\nreadable.on('readable', () => {\n  let chunk;\n  while (null !== (chunk = readable.read())) {\n    console.log(`Received ${chunk.length} bytes of data.`);\n  }\n});\n</code></pre>\n<p>Note that the <code>while</code> loop is necessary when processing data with\n<code>readable.read()</code>. Only after <code>readable.read()</code> returns <code>null</code>,\n<a href=\"\"><code>'readable'</code></a> will be emitted.</p>\n<p>A <code>Readable</code> stream in object mode will always return a single item from\na call to <a href=\"#stream_readable_read_size\"><code>readable.read(size)</code></a>, regardless of the value of the\n<code>size</code> argument.</p>\n<p>If the <code>readable.read()</code> method returns a chunk of data, a <code>'data'</code> event will\nalso be emitted.</p>\n<p>Calling <a href=\"#stream_readable_read_size\"><code>stream.read([size])</code></a> after the <a href=\"#stream_event_end\"><code>'end'</code></a> event has\nbeen emitted will return <code>null</code>. No runtime error will be raised.</p>"
                     },
                     {
                       "textRaw": "readable.resume()",
@@ -923,10 +948,16 @@
                         "added": [
                           "v10.0.0"
                         ],
-                        "changes": []
+                        "changes": [
+                          {
+                            "version": "v10.17.0",
+                            "pr-url": "https://github.com/nodejs/node/pull/26989",
+                            "description": "Symbol.asyncIterator support is no longer experimental."
+                          }
+                        ]
                       },
-                      "stability": 1,
-                      "stabilityText": "Experimental",
+                      "stability": 2,
+                      "stabilityText": "Stable",
                       "signatures": [
                         {
                           "return": {
@@ -953,6 +984,18 @@
                         "changes": []
                       },
                       "desc": "<p>Is <code>true</code> if it is safe to call [<code>readable.read()</code>][].</p>"
+                    },
+                    {
+                      "textRaw": "`readableFlowing` {boolean}",
+                      "type": "boolean",
+                      "name": "readableFlowing",
+                      "meta": {
+                        "added": [
+                          "v9.4.0"
+                        ],
+                        "changes": []
+                      },
+                      "desc": "<p>This property reflects the current state of a <code>Readable</code> stream as described\nin the <a href=\"#stream_three_states\">Stream Three States</a> section.</p>"
                     },
                     {
                       "textRaw": "`readableHighWaterMark` {number}",
@@ -1110,6 +1153,31 @@
                 }
               ],
               "desc": "<p>A module method to pipe between streams forwarding errors and properly cleaning\nup and provide a callback when the pipeline is complete.</p>\n<pre><code class=\"language-js\">const { pipeline } = require('stream');\nconst fs = require('fs');\nconst zlib = require('zlib');\n\n// Use the pipeline API to easily pipe a series of streams\n// together and get notified when the pipeline is fully done.\n\n// A pipeline to gzip a potentially huge tar file efficiently:\n\npipeline(\n  fs.createReadStream('archive.tar'),\n  zlib.createGzip(),\n  fs.createWriteStream('archive.tar.gz'),\n  (err) => {\n    if (err) {\n      console.error('Pipeline failed.', err);\n    } else {\n      console.log('Pipeline succeeded.');\n    }\n  }\n);\n</code></pre>\n<p>The <code>pipeline</code> API is promisify-able as well:</p>\n<pre><code class=\"language-js\">const pipeline = util.promisify(stream.pipeline);\n\nasync function run() {\n  await pipeline(\n    fs.createReadStream('archive.tar'),\n    zlib.createGzip(),\n    fs.createWriteStream('archive.tar.gz')\n  );\n  console.log('Pipeline succeeded.');\n}\n\nrun().catch(console.error);\n</code></pre>"
+            },
+            {
+              "textRaw": "Readable.from(iterable, [options])",
+              "type": "method",
+              "name": "from",
+              "signatures": [
+                {
+                  "params": [
+                    {
+                      "textRaw": "`iterable` {Iterable} Object implementing the `Symbol.asyncIterator` or `Symbol.iterator` iterable protocol.",
+                      "name": "iterable",
+                      "type": "Iterable",
+                      "desc": "Object implementing the `Symbol.asyncIterator` or `Symbol.iterator` iterable protocol."
+                    },
+                    {
+                      "textRaw": "`options` {Object} Options provided to `new stream.Readable([options])`. By default, `Readable.from()` will set `options.objectMode` to `true`, unless this is explicitly opted out by setting `options.objectMode` to `false`.",
+                      "name": "options",
+                      "type": "Object",
+                      "desc": "Options provided to `new stream.Readable([options])`. By default, `Readable.from()` will set `options.objectMode` to `true`, unless this is explicitly opted out by setting `options.objectMode` to `false`.",
+                      "optional": true
+                    }
+                  ]
+                }
+              ],
+              "desc": "<p>A utility method for creating Readable Streams out of iterators.</p>\n<pre><code class=\"language-js\">const { Readable } = require('stream');\n\nasync function * generate() {\n  yield 'hello';\n  yield 'streams';\n}\n\nconst readable = Readable.from(generate());\n\nreadable.on('data', (chunk) => {\n  console.log(chunk);\n});\n</code></pre>"
             }
           ]
         },
@@ -1774,6 +1842,37 @@
           "name": "Additional Notes",
           "type": "misc",
           "miscs": [
+            {
+              "textRaw": "Streams Compatibility with Async Generators and Async Iterators",
+              "name": "streams_compatibility_with_async_generators_and_async_iterators",
+              "desc": "<p>With the support of async generators and iterators in JavaScript, async\ngenerators are effectively a first-class language-level stream construct at\nthis point.</p>\n<p>Some common interop cases of using Node.js streams with async generators\nand async iterators are provided below.</p>",
+              "modules": [
+                {
+                  "textRaw": "Consuming Readable Streams with Async Iterators",
+                  "name": "consuming_readable_streams_with_async_iterators",
+                  "desc": "<pre><code class=\"language-js\">(async function() {\n  for await (const chunk of readable) {\n    console.log(chunk);\n  }\n})();\n</code></pre>",
+                  "type": "module",
+                  "displayName": "Consuming Readable Streams with Async Iterators"
+                },
+                {
+                  "textRaw": "Creating Readable Streams with Async Generators",
+                  "name": "creating_readable_streams_with_async_generators",
+                  "desc": "<p>We can construct a Node.js Readable Stream from an asynchronous generator\nusing the <code>Readable.from</code> utility method:</p>\n<pre><code class=\"language-js\">const { Readable } = require('stream');\n\nasync function * generate() {\n  yield 'a';\n  yield 'b';\n  yield 'c';\n}\n\nconst readable = Readable.from(generate());\n\nreadable.on('data', (chunk) => {\n  console.log(chunk);\n});\n</code></pre>",
+                  "type": "module",
+                  "displayName": "Creating Readable Streams with Async Generators"
+                }
+              ],
+              "miscs": [
+                {
+                  "textRaw": "Piping to Writable Streams from Async Iterators",
+                  "name": "Piping to Writable Streams from Async Iterators",
+                  "type": "misc",
+                  "desc": "<p>In the scenario of writing to a writeable stream from an async iterator,\nit is important to ensure the correct handling of backpressure and errors.</p>\n<pre><code class=\"language-js\">const { once } = require('events');\n\nconst writeable = fs.createWriteStream('./file');\n\n(async function() {\n  for await (const chunk of iterator) {\n    // Handle backpressure on write\n    if (!writeable.write(value))\n      await once(writeable, 'drain');\n  }\n  writeable.end();\n  // Ensure completion without errors\n  await once(writeable, 'finish');\n})();\n</code></pre>\n<p>In the above, errors on the write stream would be caught and thrown by the two\n<code>once</code> listeners, since <code>once</code> will also handle <code>'error'</code> events.</p>\n<p>Alternatively the readable stream could be wrapped with <code>Readable.from</code> and\nthen piped via <code>.pipe</code>:</p>\n<pre><code class=\"language-js\">const { once } = require('events');\n\nconst writeable = fs.createWriteStream('./file');\n\n(async function() {\n  const readable = Readable.from(iterator);\n  readable.pipe(writeable);\n  // Ensure completion without errors\n  await once(writeable, 'finish');\n})();\n</code></pre>"
+                }
+              ],
+              "type": "misc",
+              "displayName": "Streams Compatibility with Async Generators and Async Iterators"
+            },
             {
               "textRaw": "Compatibility with Older Node.js Versions",
               "name": "Compatibility with Older Node.js Versions",

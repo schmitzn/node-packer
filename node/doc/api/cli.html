@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>Command Line Options | Node.js v10.16.3 Documentation</title>
+  <title>Command Line Options | Node.js v10.19.0 Documentation</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic">
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/sh.css">
@@ -79,7 +79,7 @@
 
     <div id="column1" data-id="cli" class="interior">
       <header>
-        <h1>Node.js v10.16.3 Documentation</h1>
+        <h1>Node.js v10.19.0 Documentation</h1>
         <div id="gtoc">
           <ul>
             <li>
@@ -140,6 +140,7 @@
 </ul>
 </li>
 <li><a href="#cli_loader_file"><code>--loader=file</code></a></li>
+<li><a href="#cli_insecure_http_parser"><code>--insecure-http-parser</code></a></li>
 <li><a href="#cli_max_http_header_size_size"><code>--max-http-header-size=size</code></a></li>
 <li><a href="#cli_napi_modules"><code>--napi-modules</code></a></li>
 <li><a href="#cli_no_deprecation"><code>--no-deprecation</code></a></li>
@@ -162,6 +163,7 @@
 <li><a href="#cli_trace_sync_io"><code>--trace-sync-io</code></a></li>
 <li><a href="#cli_trace_warnings"><code>--trace-warnings</code></a></li>
 <li><a href="#cli_track_heap_objects"><code>--track-heap-objects</code></a></li>
+<li><a href="#cli_unhandled_rejections_mode"><code>--unhandled-rejections=mode</code></a></li>
 <li><a href="#cli_use_bundled_ca_use_openssl_ca"><code>--use-bundled-ca</code>, <code>--use-openssl-ca</code></a></li>
 <li><a href="#cli_v8_options"><code>--v8-options</code></a></li>
 <li><a href="#cli_v8_pool_size_num"><code>--v8-pool-size=num</code></a></li>
@@ -336,6 +338,14 @@ default) is not firewall-protected.</strong></p>
 <span>Added in: v9.0.0</span>
 </div>
 <p>Specify the <code>file</code> of the custom <a href="esm.html#esm_loader_hooks">experimental ECMAScript Module</a> loader.</p>
+<h3><code>--insecure-http-parser</code><span><a class="mark" href="#cli_insecure_http_parser" id="cli_insecure_http_parser">#</a></span></h3>
+<div class="api_metadata">
+<span>Added in: v10.19.0</span>
+</div>
+<p>Use an insecure HTTP parser that accepts invalid HTTP headers. This may allow
+interoperability with non-conformant HTTP implementations. It may also allow
+request smuggling and other HTTP attacks that rely on invalid headers being
+accepted. Avoid using this option.</p>
 <h3><code>--max-http-header-size=size</code><span><a class="mark" href="#cli_max_http_header_size_size" id="cli_max_http_header_size_size">#</a></span></h3>
 <div class="api_metadata">
 <span>Added in: v10.15.0</span>
@@ -502,6 +512,21 @@ of the event loop.</p>
 <span>Added in: v2.4.0</span>
 </div>
 <p>Track heap object allocations for heap snapshots.</p>
+<h3><code>--unhandled-rejections=mode</code><span><a class="mark" href="#cli_unhandled_rejections_mode" id="cli_unhandled_rejections_mode">#</a></span></h3>
+<div class="api_metadata">
+<span>Added in: v10.17.0</span>
+</div>
+<p>By default all unhandled rejections trigger a warning plus a deprecation warning
+for the very first unhandled rejection in case no <a href="process.html#process_event_unhandledrejection"><code>unhandledRejection</code></a> hook
+is used.</p>
+<p>Using this flag allows to change what should happen when an unhandled rejection
+occurs. One of three modes can be chosen:</p>
+<ul>
+<li><code>strict</code>: Raise the unhandled rejection as an uncaught exception.</li>
+<li><code>warn</code>: Always trigger a warning, no matter if the <a href="process.html#process_event_unhandledrejection"><code>unhandledRejection</code></a>
+hook is set or not but do not print the deprecation warning.</li>
+<li><code>none</code>: Silence all warnings.</li>
+</ul>
 <h3><code>--use-bundled-ca</code>, <code>--use-openssl-ca</code><span><a class="mark" href="#cli_use_bundled_ca_use_openssl_ca" id="cli_use_bundled_ca_use_openssl_ca">#</a></span></h3>
 <div class="api_metadata">
 <span>Added in: v6.11.0</span>
@@ -657,6 +682,7 @@ that is not allowed in the environment is used, such as <code>-p</code> or a scr
 <li><code>--experimental-worker</code></li>
 <li><code>--force-fips</code></li>
 <li><code>--icu-data-dir</code></li>
+<li><code>--insecure-http-parser</code></li>
 <li><code>--inspect</code></li>
 <li><code>--inspect-brk</code></li>
 <li><code>--inspect-port</code></li>
@@ -680,6 +706,7 @@ that is not allowed in the environment is used, such as <code>-p</code> or a scr
 <li><code>--trace-sync-io</code></li>
 <li><code>--trace-warnings</code></li>
 <li><code>--track-heap-objects</code></li>
+<li><code>--unhandled-rejections</code></li>
 <li><code>--use-bundled-ca</code></li>
 <li><code>--use-openssl-ca</code></li>
 <li><code>--v8-pool-size</code></li>

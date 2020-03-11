@@ -139,6 +139,12 @@ Specify the
 as a custom loader, to load
 .Fl -experimental-modules .
 .
+.It Fl -insecure-http-parser
+Use an insecure HTTP parser that accepts invalid HTTP headers. This may allow
+interoperability with non-conformant HTTP implementations. It may also allow
+request smuggling and other HTTP attacks that rely on invalid headers being
+accepted. Avoid using this option.
+.
 .It Fl -max-http-header-size Ns = Ns Ar size
 Specify the maximum size of HTTP headers in bytes. Defaults to 8KB.
 .
@@ -217,6 +223,9 @@ Print stack traces for process warnings (including deprecations).
 .
 .It Fl -track-heap-objects
 Track heap object allocations for heap snapshots.
+.
+.It Fl --unhandled-rejections=mode
+Define the behavior for unhandled rejections. Can be one of `strict` (raise an error), `warn` (enforce warnings) or `none` (silence warnings).
 .
 .It Fl -use-bundled-ca , Fl -use-openssl-ca
 Use bundled Mozilla CA store as supplied by current Node.js version or use OpenSSL's default CA store.

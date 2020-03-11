@@ -84,6 +84,7 @@ class EnvironmentOptions : public Options {
   bool trace_deprecation = false;
   bool trace_sync_io = false;
   bool trace_warnings = false;
+  std::string unhandled_rejections;
   std::string userland_loader;
 
   bool syntax_check_only = false;
@@ -91,6 +92,8 @@ class EnvironmentOptions : public Options {
   std::string eval_string;
   bool print_eval = false;
   bool force_repl = false;
+
+  bool insecure_http_parser = false;
 
   std::vector<std::string> preload_modules;
 

@@ -1401,17 +1401,17 @@
                       "desc": "Private keys in PEM format. PEM allows the option of private keys being encrypted. Encrypted keys will be decrypted with `options.passphrase`. Multiple keys using different algorithms can be provided either as an array of unencrypted key strings or buffers, or an array of objects in the form `{pem: <string|buffer>[, passphrase: <string>]}`. The object form can only occur in an array. `object.passphrase` is optional. Encrypted keys will be decrypted with `object.passphrase` if provided, or `options.passphrase` if it is not."
                     },
                     {
-                      "textRaw": "`maxVersion` {string} Optionally set the maximum TLS version to allow. One of `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. Cannot be specified along with the `secureProtocol` option, use one or the other. **Default:** `'TLSv1.2'`.",
+                      "textRaw": "`maxVersion` {string} Optionally set the maximum TLS version to allow. One of `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. Cannot be specified along with the `secureProtocol` option, use one or the other. **Default:** [`tls.DEFAULT_MAX_VERSION`][].",
                       "name": "maxVersion",
                       "type": "string",
-                      "default": "`'TLSv1.2'`",
+                      "default": "[`tls.DEFAULT_MAX_VERSION`][]",
                       "desc": "Optionally set the maximum TLS version to allow. One of `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. Cannot be specified along with the `secureProtocol` option, use one or the other."
                     },
                     {
-                      "textRaw": "`minVersion` {string} Optionally set the minimum TLS version to allow. One of `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. Cannot be specified along with the `secureProtocol` option, use one or the other. It is not recommended to use less than TLSv1.2, but it may be required for interoperability. **Default:** `'TLSv1'`.",
+                      "textRaw": "`minVersion` {string} Optionally set the minimum TLS version to allow. One of `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. Cannot be specified along with the `secureProtocol` option, use one or the other. It is not recommended to use less than TLSv1.2, but it may be required for interoperability. **Default:** [`tls.DEFAULT_MIN_VERSION`][].",
                       "name": "minVersion",
                       "type": "string",
-                      "default": "`'TLSv1'`",
+                      "default": "[`tls.DEFAULT_MIN_VERSION`][]",
                       "desc": "Optionally set the minimum TLS version to allow. One of `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. Cannot be specified along with the `secureProtocol` option, use one or the other. It is not recommended to use less than TLSv1.2, but it may be required for interoperability."
                     },
                     {
@@ -1602,6 +1602,32 @@
             ]
           },
           "desc": "<p>The default curve name to use for ECDH key agreement in a tls server. The\ndefault value is <code>'auto'</code>. See <a href=\"#tls_tls_createsecurecontext_options\"><code>tls.createSecureContext()</code></a> for further\ninformation.</p>"
+        },
+        {
+          "textRaw": "`DEFAULT_MAX_VERSION` {string} The default value of the `maxVersion` option of [`tls.createSecureContext()`][]. It can be assigned any of the supported TLS protocol versions, `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. **Default:** `'TLSv1.2'`.",
+          "type": "string",
+          "name": "DEFAULT_MAX_VERSION",
+          "meta": {
+            "added": [
+              "v10.6.0"
+            ],
+            "changes": []
+          },
+          "default": "`'TLSv1.2'`",
+          "desc": "The default value of the `maxVersion` option of [`tls.createSecureContext()`][]. It can be assigned any of the supported TLS protocol versions, `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`."
+        },
+        {
+          "textRaw": "`DEFAULT_MIN_VERSION` {string} The default value of the `minVersion` option of [`tls.createSecureContext()`][]. It can be assigned any of the supported TLS protocol versions, `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`. **Default:** `'TLSv1'`.",
+          "type": "string",
+          "name": "DEFAULT_MIN_VERSION",
+          "meta": {
+            "added": [
+              "v10.6.0"
+            ],
+            "changes": []
+          },
+          "default": "`'TLSv1'`",
+          "desc": "The default value of the `minVersion` option of [`tls.createSecureContext()`][]. It can be assigned any of the supported TLS protocol versions, `TLSv1.2'`, `'TLSv1.1'`, or `'TLSv1'`."
         }
       ],
       "type": "module",

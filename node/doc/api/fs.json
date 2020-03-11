@@ -49,8 +49,8 @@
         {
           "textRaw": "fs Promises API",
           "name": "fs_promises_api",
-          "stability": 1,
-          "stabilityText": "Experimental",
+          "stability": 2,
+          "stabilityText": "Stable",
           "desc": "<p>The <code>fs.promises</code> API provides an alternative set of asynchronous file system\nmethods that return <code>Promise</code> objects rather than using callbacks. The\nAPI is accessible via <code>require('fs').promises</code>.</p>",
           "classes": [
             {

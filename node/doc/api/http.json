@@ -1538,6 +1538,11 @@
                 ],
                 "changes": [
                   {
+                    "version": "v10.17.0",
+                    "pr-url": "https://github.com/nodejs/node/pull/25974",
+                    "description": "Return `this` from `writeHead()` to allow chaining with `end()`."
+                  },
+                  {
                     "version": "v5.11.0, v4.4.5",
                     "pr-url": "https://github.com/nodejs/node/pull/6291",
                     "description": "A `RangeError` is thrown if `statusCode` is not a number in the range `[100, 999]`."
@@ -1546,6 +1551,11 @@
               },
               "signatures": [
                 {
+                  "return": {
+                    "textRaw": "Returns: {http.ServerResponse}",
+                    "name": "return",
+                    "type": "http.ServerResponse"
+                  },
                   "params": [
                     {
                       "textRaw": "`statusCode` {number}",
@@ -1567,7 +1577,7 @@
                   ]
                 }
               ],
-              "desc": "<p>Sends a response header to the request. The status code is a 3-digit HTTP\nstatus code, like <code>404</code>. The last argument, <code>headers</code>, are the response headers.\nOptionally one can give a human-readable <code>statusMessage</code> as the second\nargument.</p>\n<pre><code class=\"language-js\">const body = 'hello world';\nresponse.writeHead(200, {\n  'Content-Length': Buffer.byteLength(body),\n  'Content-Type': 'text/plain' });\n</code></pre>\n<p>This method must only be called once on a message and it must\nbe called before <a href=\"#http_response_end_data_encoding_callback\"><code>response.end()</code></a> is called.</p>\n<p>If <a href=\"#http_response_write_chunk_encoding_callback\"><code>response.write()</code></a> or <a href=\"#http_response_end_data_encoding_callback\"><code>response.end()</code></a> are called before calling\nthis, the implicit/mutable headers will be calculated and call this function.</p>\n<p>When headers have been set with <a href=\"#http_response_setheader_name_value\"><code>response.setHeader()</code></a>, they will be merged\nwith any headers passed to <a href=\"#http_response_writehead_statuscode_statusmessage_headers\"><code>response.writeHead()</code></a>, with the headers passed\nto <a href=\"#http_response_writehead_statuscode_statusmessage_headers\"><code>response.writeHead()</code></a> given precedence.</p>\n<p>If this method is called and <a href=\"#http_response_setheader_name_value\"><code>response.setHeader()</code></a> has not been called,\nit will directly write the supplied header values onto the network channel\nwithout caching internally, and the <a href=\"#http_response_getheader_name\"><code>response.getHeader()</code></a> on the header\nwill not yield the expected result. If progressive population of headers is\ndesired with potential future retrieval and modification, use\n<a href=\"#http_response_setheader_name_value\"><code>response.setHeader()</code></a> instead.</p>\n<pre><code class=\"language-js\">// returns content-type = text/plain\nconst server = http.createServer((req, res) => {\n  res.setHeader('Content-Type', 'text/html');\n  res.setHeader('X-Foo', 'bar');\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('ok');\n});\n</code></pre>\n<p>Note that Content-Length is given in bytes not characters. The above example\nworks because the string <code>'hello world'</code> contains only single byte characters.\nIf the body contains higher coded characters then <code>Buffer.byteLength()</code>\nshould be used to determine the number of bytes in a given encoding.\nAnd Node.js does not check whether Content-Length and the length of the body\nwhich has been transmitted are equal or not.</p>\n<p>Attempting to set a header field name or value that contains invalid characters\nwill result in a <a href=\"errors.html#errors_class_typeerror\"><code>TypeError</code></a> being thrown.</p>"
+              "desc": "<p>Sends a response header to the request. The status code is a 3-digit HTTP\nstatus code, like <code>404</code>. The last argument, <code>headers</code>, are the response headers.\nOptionally one can give a human-readable <code>statusMessage</code> as the second\nargument.</p>\n<p>Returns a reference to the <code>ServerResponse</code>, so that calls can be chained.</p>\n<pre><code class=\"language-js\">const body = 'hello world';\nresponse\n  .writeHead(200, {\n    'Content-Length': Buffer.byteLength(body),\n    'Content-Type': 'text/plain'\n  })\n  .end(body);\n</code></pre>\n<p>This method must only be called once on a message and it must\nbe called before <a href=\"#http_response_end_data_encoding_callback\"><code>response.end()</code></a> is called.</p>\n<p>If <a href=\"#http_response_write_chunk_encoding_callback\"><code>response.write()</code></a> or <a href=\"#http_response_end_data_encoding_callback\"><code>response.end()</code></a> are called before calling\nthis, the implicit/mutable headers will be calculated and call this function.</p>\n<p>When headers have been set with <a href=\"#http_response_setheader_name_value\"><code>response.setHeader()</code></a>, they will be merged\nwith any headers passed to <a href=\"#http_response_writehead_statuscode_statusmessage_headers\"><code>response.writeHead()</code></a>, with the headers passed\nto <a href=\"#http_response_writehead_statuscode_statusmessage_headers\"><code>response.writeHead()</code></a> given precedence.</p>\n<p>If this method is called and <a href=\"#http_response_setheader_name_value\"><code>response.setHeader()</code></a> has not been called,\nit will directly write the supplied header values onto the network channel\nwithout caching internally, and the <a href=\"#http_response_getheader_name\"><code>response.getHeader()</code></a> on the header\nwill not yield the expected result. If progressive population of headers is\ndesired with potential future retrieval and modification, use\n<a href=\"#http_response_setheader_name_value\"><code>response.setHeader()</code></a> instead.</p>\n<pre><code class=\"language-js\">// returns content-type = text/plain\nconst server = http.createServer((req, res) => {\n  res.setHeader('Content-Type', 'text/html');\n  res.setHeader('X-Foo', 'bar');\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('ok');\n});\n</code></pre>\n<p>Note that Content-Length is given in bytes not characters. The above example\nworks because the string <code>'hello world'</code> contains only single byte characters.\nIf the body contains higher coded characters then <code>Buffer.byteLength()</code>\nshould be used to determine the number of bytes in a given encoding.\nAnd Node.js does not check whether Content-Length and the length of the body\nwhich has been transmitted are equal or not.</p>\n<p>Attempting to set a header field name or value that contains invalid characters\nwill result in a <a href=\"errors.html#errors_class_typeerror\"><code>TypeError</code></a> being thrown.</p>"
             },
             {
               "textRaw": "response.writeProcessing()",
@@ -1981,6 +1991,11 @@
             ],
             "changes": [
               {
+                "version": "v10.19.0",
+                "pr-url": "https://github.com/nodejs/node/pull/31448",
+                "description": "The `insecureHTTPParser` option is supported now."
+              },
+              {
                 "version": "v9.6.0, v8.12.0",
                 "pr-url": "https://github.com/nodejs/node/pull/15752",
                 "description": "The `options` argument is supported now."
@@ -2013,6 +2028,13 @@
                       "type": "http.ServerResponse",
                       "default": "`ServerResponse`",
                       "desc": "Specifies the `ServerResponse` class to be used. Useful for extending the original `ServerResponse`."
+                    },
+                    {
+                      "textRaw": "`insecureHTTPParser` {boolean} Use an insecure HTTP parser that accepts invalid HTTP headers when `true`. Using the insecure parser should be avoided. See [`--insecure-http-parser`][] for more information. **Default:** `false`",
+                      "name": "insecureHTTPParser",
+                      "type": "boolean",
+                      "default": "`false`",
+                      "desc": "Use an insecure HTTP parser that accepts invalid HTTP headers when `true`. Using the insecure parser should be avoided. See [`--insecure-http-parser`][] for more information."
                     }
                   ],
                   "optional": true
@@ -2136,6 +2158,11 @@
             ],
             "changes": [
               {
+                "version": "v10.19.0",
+                "pr-url": "https://github.com/nodejs/node/pull/31448",
+                "description": "The `insecureHTTPParser` option is supported now."
+              },
+              {
                 "version": "v10.9.0",
                 "pr-url": "https://github.com/nodejs/node/pull/21616",
                 "description": "The `url` parameter can now be passed along with a separate `options` object."
@@ -2185,6 +2212,13 @@
                       "name": "family",
                       "type": "number",
                       "desc": "IP address family to use when resolving `host` or `hostname`. Valid values are `4` or `6`. When unspecified, both IP v4 and v6 will be used."
+                    },
+                    {
+                      "textRaw": "`insecureHTTPParser` {boolean} Use an insecure HTTP parser that accepts invalid HTTP headers when `true`. Using the insecure parser should be avoided. See [`--insecure-http-parser`][] for more information. **Default:** `false`",
+                      "name": "insecureHTTPParser",
+                      "type": "boolean",
+                      "default": "`false`",
+                      "desc": "Use an insecure HTTP parser that accepts invalid HTTP headers when `true`. Using the insecure parser should be avoided. See [`--insecure-http-parser`][] for more information."
                     },
                     {
                       "textRaw": "`port` {number} Port of remote server. **Default:** `80`.",
@@ -2295,6 +2329,11 @@
             ],
             "changes": [
               {
+                "version": "v10.19.0",
+                "pr-url": "https://github.com/nodejs/node/pull/31448",
+                "description": "The `insecureHTTPParser` option is supported now."
+              },
+              {
                 "version": "v10.9.0",
                 "pr-url": "https://github.com/nodejs/node/pull/21616",
                 "description": "The `url` parameter can now be passed along with a separate `options` object."
@@ -2349,6 +2388,13 @@
                       "name": "family",
                       "type": "number",
                       "desc": "IP address family to use when resolving `host` or `hostname`. Valid values are `4` or `6`. When unspecified, both IP v4 and v6 will be used."
+                    },
+                    {
+                      "textRaw": "`insecureHTTPParser` {boolean} Use an insecure HTTP parser that accepts invalid HTTP headers when `true`. Using the insecure parser should be avoided. See [`--insecure-http-parser`][] for more information. **Default:** `false`",
+                      "name": "insecureHTTPParser",
+                      "type": "boolean",
+                      "default": "`false`",
+                      "desc": "Use an insecure HTTP parser that accepts invalid HTTP headers when `true`. Using the insecure parser should be avoided. See [`--insecure-http-parser`][] for more information."
                     },
                     {
                       "textRaw": "`port` {number} Port of remote server. **Default:** `80`.",

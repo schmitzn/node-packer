@@ -145,10 +145,29 @@
                 "added": [
                   "v0.1.18"
                 ],
-                "changes": []
+                "changes": [
+                  {
+                    "version": "v10.17.0",
+                    "pr-url": "https://github.com/nodejs/node/pull/26599",
+                    "description": "Added the `origin` argument."
+                  }
+                ]
               },
-              "params": [],
-              "desc": "<p>The <code>'uncaughtException'</code> event is emitted when an uncaught JavaScript\nexception bubbles all the way back to the event loop. By default, Node.js\nhandles such exceptions by printing the stack trace to <code>stderr</code> and exiting\nwith code 1, overriding any previously set <a href=\"#process_process_exitcode\"><code>process.exitCode</code></a>.\nAdding a handler for the <code>'uncaughtException'</code> event overrides this default\nbehavior. Alternatively, change the <a href=\"#process_process_exitcode\"><code>process.exitCode</code></a> in the\n<code>'uncaughtException'</code> handler which will result in the process exiting with the\nprovided exit code. Otherwise, in the presence of such handler the process will\nexit with 0.</p>\n<p>The listener function is called with the <code>Error</code> object passed as the only\nargument.</p>\n<pre><code class=\"language-js\">process.on('uncaughtException', (err) => {\n  fs.writeSync(1, `Caught exception: ${err}\\n`);\n});\n\nsetTimeout(() => {\n  console.log('This will still run.');\n}, 500);\n\n// Intentionally cause an exception, but don't catch it.\nnonexistentFunc();\nconsole.log('This will not run.');\n</code></pre>",
+              "params": [
+                {
+                  "textRaw": "`err` {Error} The uncaught exception.",
+                  "name": "err",
+                  "type": "Error",
+                  "desc": "The uncaught exception."
+                },
+                {
+                  "textRaw": "`origin` {string} Indicates if the exception originates from an unhandled rejection or from synchronous errors. Can either be `'uncaughtException'` or `'unhandledRejection'`.",
+                  "name": "origin",
+                  "type": "string",
+                  "desc": "Indicates if the exception originates from an unhandled rejection or from synchronous errors. Can either be `'uncaughtException'` or `'unhandledRejection'`."
+                }
+              ],
+              "desc": "<p>The <code>'uncaughtException'</code> event is emitted when an uncaught JavaScript\nexception bubbles all the way back to the event loop. By default, Node.js\nhandles such exceptions by printing the stack trace to <code>stderr</code> and exiting\nwith code 1, overriding any previously set <a href=\"#process_process_exitcode\"><code>process.exitCode</code></a>.\nAdding a handler for the <code>'uncaughtException'</code> event overrides this default\nbehavior. Alternatively, change the <a href=\"#process_process_exitcode\"><code>process.exitCode</code></a> in the\n<code>'uncaughtException'</code> handler which will result in the process exiting with the\nprovided exit code. Otherwise, in the presence of such handler the process will\nexit with 0.</p>\n<pre><code class=\"language-js\">process.on('uncaughtException', (err, origin) => {\n  fs.writeSync(\n    process.stderr.fd,\n    `Caught exception: ${err}\\n` +\n    `Exception origin: ${origin}`\n  );\n});\n\nsetTimeout(() => {\n  console.log('This will still run.');\n}, 500);\n\n// Intentionally cause an exception, but don't catch it.\nnonexistentFunc();\nconsole.log('This will not run.');\n</code></pre>",
               "modules": [
                 {
                   "textRaw": "Warning: Using `'uncaughtException'` correctly",
@@ -180,8 +199,21 @@
                   }
                 ]
               },
-              "params": [],
-              "desc": "<p>The <code>'unhandledRejection'</code> event is emitted whenever a <code>Promise</code> is rejected and\nno error handler is attached to the promise within a turn of the event loop.\nWhen programming with Promises, exceptions are encapsulated as \"rejected\npromises\". Rejections can be caught and handled using <a href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/catch\"><code>promise.catch()</code></a> and\nare propagated through a <code>Promise</code> chain. The <code>'unhandledRejection'</code> event is\nuseful for detecting and keeping track of promises that were rejected whose\nrejections have not yet been handled.</p>\n<p>The listener function is called with the following arguments:</p>\n<ul>\n<li><code>reason</code> <a href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error\" class=\"type\">&lt;Error&gt;</a> | <a href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Data_types\" class=\"type\">&lt;any&gt;</a> The object with which the promise was rejected\n(typically an <a href=\"errors.html#errors_class_error\"><code>Error</code></a> object).</li>\n<li><code>p</code> the <code>Promise</code> that was rejected.</li>\n</ul>\n<pre><code class=\"language-js\">process.on('unhandledRejection', (reason, p) => {\n  console.log('Unhandled Rejection at:', p, 'reason:', reason);\n  // application specific logging, throwing an error, or other logic here\n});\n\nsomePromise.then((res) => {\n  return reportToUser(JSON.pasre(res)); // note the typo (`pasre`)\n}); // no `.catch()` or `.then()`\n</code></pre>\n<p>The following will also trigger the <code>'unhandledRejection'</code> event to be\nemitted:</p>\n<pre><code class=\"language-js\">function SomeResource() {\n  // Initially set the loaded status to a rejected promise\n  this.loaded = Promise.reject(new Error('Resource not yet loaded!'));\n}\n\nconst resource = new SomeResource();\n// no .catch or .then on resource.loaded for at least a turn\n</code></pre>\n<p>In this example case, it is possible to track the rejection as a developer error\nas would typically be the case for other <code>'unhandledRejection'</code> events. To\naddress such failures, a non-operational\n<a href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/catch\"><code>.catch(() => { })</code></a> handler may be attached to\n<code>resource.loaded</code>, which would prevent the <code>'unhandledRejection'</code> event from\nbeing emitted. Alternatively, the <a href=\"#process_event_rejectionhandled\"><code>'rejectionHandled'</code></a> event may be used.</p>"
+              "params": [
+                {
+                  "textRaw": "`reason` {Error|any} The object with which the promise was rejected (typically an [`Error`][] object).",
+                  "name": "reason",
+                  "type": "Error|any",
+                  "desc": "The object with which the promise was rejected (typically an [`Error`][] object)."
+                },
+                {
+                  "textRaw": "`promise` {Promise} The rejected promise.",
+                  "name": "promise",
+                  "type": "Promise",
+                  "desc": "The rejected promise."
+                }
+              ],
+              "desc": "<p>The <code>'unhandledRejection'</code> event is emitted whenever a <code>Promise</code> is rejected and\nno error handler is attached to the promise within a turn of the event loop.\nWhen programming with Promises, exceptions are encapsulated as \"rejected\npromises\". Rejections can be caught and handled using <a href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/catch\"><code>promise.catch()</code></a> and\nare propagated through a <code>Promise</code> chain. The <code>'unhandledRejection'</code> event is\nuseful for detecting and keeping track of promises that were rejected whose\nrejections have not yet been handled.</p>\n<pre><code class=\"language-js\">process.on('unhandledRejection', (reason, promise) => {\n  console.log('Unhandled Rejection at:', promise, 'reason:', reason);\n  // Application specific logging, throwing an error, or other logic here\n});\n\nsomePromise.then((res) => {\n  return reportToUser(JSON.pasre(res)); // note the typo (`pasre`)\n}); // no `.catch()` or `.then()`\n</code></pre>\n<p>The following will also trigger the <code>'unhandledRejection'</code> event to be\nemitted:</p>\n<pre><code class=\"language-js\">function SomeResource() {\n  // Initially set the loaded status to a rejected promise\n  this.loaded = Promise.reject(new Error('Resource not yet loaded!'));\n}\n\nconst resource = new SomeResource();\n// no .catch or .then on resource.loaded for at least a turn\n</code></pre>\n<p>In this example case, it is possible to track the rejection as a developer error\nas would typically be the case for other <code>'unhandledRejection'</code> events. To\naddress such failures, a non-operational\n<a href=\"https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/catch\"><code>.catch(() => { })</code></a> handler may be attached to\n<code>resource.loaded</code>, which would prevent the <code>'unhandledRejection'</code> event from\nbeing emitted.</p>"
             },
             {
               "textRaw": "Event: 'warning'",

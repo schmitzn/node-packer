@@ -1615,8 +1615,11 @@ static Local<Object> X509ToObject(Environment* env, X509* cert) {
     X509_EXTENSION* ext = X509_get_ext(cert, index);
     CHECK_NOT_NULL(ext);
 
-    if (!SafeX509ExtPrint(bio.get(), ext)) {
-      CHECK_EQ(1, X509V3_EXT_print(bio.get(), ext, 0, 0));
+    if (!SafeX509ExtPrint(bio.get(), ext) &&
+        X509V3_EXT_print(bio.get(), ext, 0, 0) != 1) {
+      info->Set(context, keys[i], Null(env->isolate())).FromJust();
+      USE(BIO_reset(bio.get()));
+      continue;
     }
 
     BIO_get_mem_ptr(bio.get(), &mem);
@@ -2557,10 +2560,19 @@ int VerifyCallback(int preverify_ok, X509_STORE_CTX* ctx) {
   return 1;
 }
 
-static bool IsSupportedAuthenticatedMode(int mode) {
-  return mode == EVP_CIPH_CCM_MODE ||
+static bool IsSupportedAuthenticatedMode(const EVP_CIPHER* cipher) {
+  const int mode = EVP_CIPHER_mode(cipher);
+  // Check `chacha20-poly1305` separately, it is also an AEAD cipher,
+  // but its mode is 0 which doesn't indicate
+  return EVP_CIPHER_nid(cipher) == NID_chacha20_poly1305 ||
+         mode == EVP_CIPH_CCM_MODE ||
          mode == EVP_CIPH_GCM_MODE ||
          IS_OCB_MODE(mode);
+}
+
+static bool IsSupportedAuthenticatedMode(const EVP_CIPHER_CTX* ctx) {
+  const EVP_CIPHER* cipher = EVP_CIPHER_CTX_cipher(ctx);
+  return IsSupportedAuthenticatedMode(cipher);
 }
 
 void CipherBase::Initialize(Environment* env, Local<Object> target) {
@@ -2610,7 +2622,7 @@ void CipherBase::CommonInit(const char* cipher_type,
                             "Failed to initialize cipher");
   }
 
-  if (IsSupportedAuthenticatedMode(mode)) {
+  if (IsSupportedAuthenticatedMode(cipher)) {
     CHECK_GE(iv_len, 0);
     if (!InitAuthenticated(cipher_type, iv_len, auth_tag_len))
       return;
@@ -2712,8 +2724,7 @@ void CipherBase::InitIv(const char* cipher_type,
   }
 
   const int expected_iv_len = EVP_CIPHER_iv_length(cipher);
-  const int mode = EVP_CIPHER_mode(cipher);
-  const bool is_authenticated_mode = IsSupportedAuthenticatedMode(mode);
+  const bool is_authenticated_mode = IsSupportedAuthenticatedMode(cipher);
   const bool has_iv = iv_len >= 0;
 
   // Throw if no IV was passed and the cipher requires an IV
@@ -2785,7 +2796,20 @@ bool CipherBase::InitAuthenticated(const char* cipher_type, int iv_len,
   }
 
   const int mode = EVP_CIPHER_CTX_mode(ctx_.get());
-  if (mode == EVP_CIPH_CCM_MODE || IS_OCB_MODE(mode)) {
+  if (mode == EVP_CIPH_GCM_MODE) {
+    if (auth_tag_len != kNoAuthTagLength) {
+      if (!IsValidGCMTagLength(auth_tag_len)) {
+        char msg[50];
+        snprintf(msg, sizeof(msg),
+            "Invalid GCM authentication tag length: %u", auth_tag_len);
+        env()->ThrowError(msg);
+        return false;
+      }
+
+      // Remember the given authentication tag length for later.
+      auth_tag_len_ = auth_tag_len;
+    }
+  } else {
     if (auth_tag_len == kNoAuthTagLength) {
       char msg[128];
       snprintf(msg, sizeof(msg), "authTagLength required for %s", cipher_type);
@@ -2818,21 +2842,6 @@ bool CipherBase::InitAuthenticated(const char* cipher_type, int iv_len,
       if (iv_len == 12) max_message_size_ = 16777215;
       if (iv_len == 13) max_message_size_ = 65535;
     }
-  } else {
-    CHECK_EQ(mode, EVP_CIPH_GCM_MODE);
-
-    if (auth_tag_len != kNoAuthTagLength) {
-      if (!IsValidGCMTagLength(auth_tag_len)) {
-        char msg[50];
-        snprintf(msg, sizeof(msg),
-            "Invalid GCM authentication tag length: %u", auth_tag_len);
-        env()->ThrowError(msg);
-        return false;
-      }
-
-      // Remember the given authentication tag length for later.
-      auth_tag_len_ = auth_tag_len;
-    }
   }
 
   return true;
@@ -2855,8 +2864,7 @@ bool CipherBase::CheckCCMMessageLength(int message_len) {
 bool CipherBase::IsAuthenticatedMode() const {
   // Check if this cipher operates in an AEAD mode that we support.
   CHECK(ctx_);
-  const int mode = EVP_CIPHER_CTX_mode(ctx_.get());
-  return IsSupportedAuthenticatedMode(mode);
+  return IsSupportedAuthenticatedMode(ctx_.get());
 }
 
 
@@ -2913,7 +2921,7 @@ void CipherBase::SetAuthTag(const FunctionCallbackInfo<Value>& args) {
   } else if (mode == EVP_CIPH_OCB_MODE) {
     // At this point, the tag length is already known and must match the
     // length of the given authentication tag.
-    CHECK(mode == EVP_CIPH_CCM_MODE || IS_OCB_MODE(mode));
+    CHECK(IsSupportedAuthenticatedMode(cipher->ctx_.get()));
     CHECK_NE(cipher->auth_tag_len_, kNoAuthTagLength);
     if (cipher->auth_tag_len_ != tag_len) {
       char msg[50];
@@ -3120,7 +3128,7 @@ bool CipherBase::Final(unsigned char** out, int* out_len) {
   *out = Malloc<unsigned char>(
       static_cast<size_t>(EVP_CIPHER_CTX_block_size(ctx_.get())));
 
-  if (kind_ == kDecipher && IsSupportedAuthenticatedMode(mode)) {
+  if (kind_ == kDecipher && IsSupportedAuthenticatedMode(ctx_.get())) {
     MaybePassAuthTagToOpenSSL();
   }
 
@@ -3572,22 +3580,20 @@ static MallocedBuffer<unsigned char> Node_SignFinal(EVPMDPointer&& mdctx,
   return MallocedBuffer<unsigned char>();
 }
 
-std::pair<SignBase::Error, MallocedBuffer<unsigned char>> Sign::SignFinal(
+Sign::SignResult Sign::SignFinal(
     const char* key_pem,
     int key_pem_len,
     const char* passphrase,
     int padding,
     int salt_len) {
-  MallocedBuffer<unsigned char> buffer;
-
   if (!mdctx_)
-    return std::make_pair(kSignNotInitialised, std::move(buffer));
+    return SignResult(kSignNotInitialised);
 
   EVPMDPointer mdctx = std::move(mdctx_);
 
   BIOPointer bp(BIO_new_mem_buf(const_cast<char*>(key_pem), key_pem_len));
   if (!bp)
-    return std::make_pair(kSignPrivateKey, std::move(buffer));
+    return SignResult(kSignPrivateKey);
 
   EVPKeyPointer pkey(PEM_read_bio_PrivateKey(bp.get(),
                                              nullptr,
@@ -3598,7 +3604,7 @@ std::pair<SignBase::Error, MallocedBuffer<unsigned char>> Sign::SignFinal(
   // without `pkey` being set to nullptr;
   // cf. the test of `test_bad_rsa_privkey.pem` for an example.
   if (!pkey || 0 != ERR_peek_error())
-    return std::make_pair(kSignPrivateKey, std::move(buffer));
+    return SignResult(kSignPrivateKey);
 
 #ifdef NODE_FIPS_MODE
   /* Validate DSA2 parameters from FIPS 186-4 */
@@ -3622,9 +3628,10 @@ std::pair<SignBase::Error, MallocedBuffer<unsigned char>> Sign::SignFinal(
   }
 #endif  // NODE_FIPS_MODE
 
-  buffer = Node_SignFinal(std::move(mdctx), pkey, padding, salt_len);
+  MallocedBuffer<unsigned char> buffer =
+      Node_SignFinal(std::move(mdctx), pkey, padding, salt_len);
   Error error = buffer.is_empty() ? kSignPrivateKey : kSignOk;
-  return std::make_pair(error, std::move(buffer));
+  return SignResult(error, std::move(buffer));
 }
 
 
@@ -3649,18 +3656,18 @@ void Sign::SignFinal(const FunctionCallbackInfo<Value>& args) {
 
   ClearErrorOnReturn clear_error_on_return;
 
-  std::pair<Error, MallocedBuffer<unsigned char>> ret = sign->SignFinal(
+  SignResult ret = sign->SignFinal(
       buf,
       buf_len,
       len >= 2 && !args[1]->IsNull() ? *passphrase : nullptr,
       padding,
       salt_len);
 
-  if (std::get<Error>(ret) != kSignOk)
-    return sign->CheckThrow(std::get<Error>(ret));
+  if (ret.error != kSignOk)
+    return sign->CheckThrow(ret.error);
 
   MallocedBuffer<unsigned char> sig =
-      std::move(std::get<MallocedBuffer<unsigned char>>(ret));
+      std::move(ret.signature);
 
   Local<Object> rc =
       Buffer::New(env, reinterpret_cast<char*>(sig.release()), sig.size)
@@ -4754,7 +4761,7 @@ struct ScryptJob : public CryptoJob {
   uint32_t N;
   uint32_t r;
   uint32_t p;
-  uint32_t maxmem;
+  uint64_t maxmem;
   CryptoErrorVector errors;
 
   inline explicit ScryptJob(Environment* env) : CryptoJob(env) {}
@@ -4809,7 +4816,7 @@ void Scrypt(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[3]->IsUint32());  // N
   CHECK(args[4]->IsUint32());  // r
   CHECK(args[5]->IsUint32());  // p
-  CHECK(args[6]->IsUint32());  // maxmem
+  CHECK(args[6]->IsNumber());  // maxmem
   CHECK(args[7]->IsObject() || args[7]->IsUndefined());  // wrap object
   std::unique_ptr<ScryptJob> job(new ScryptJob(env));
   job->keybuf_data = reinterpret_cast<unsigned char*>(Buffer::Data(args[0]));
@@ -4819,7 +4826,8 @@ void Scrypt(const FunctionCallbackInfo<Value>& args) {
   job->N = args[3].As<Uint32>()->Value();
   job->r = args[4].As<Uint32>()->Value();
   job->p = args[5].As<Uint32>()->Value();
-  job->maxmem = args[6].As<Uint32>()->Value();
+  Local<Context> ctx = env->isolate()->GetCurrentContext();
+  job->maxmem = static_cast<uint64_t>(args[6]->IntegerValue(ctx).ToChecked());
   if (!job->Validate()) {
     // EVP_PBE_scrypt() does not always put errors on the error stack
     // and therefore ToResult() may or may not return an exception
@@ -4864,8 +4872,10 @@ class RSAKeyPairGenerationConfig : public KeyPairGenerationConfig {
       BignumPointer bn(BN_new());
       CHECK_NOT_NULL(bn.get());
       CHECK(BN_set_word(bn.get(), exponent_));
+      // EVP_CTX acceps ownership of bn on success.
       if (EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx.get(), bn.get()) <= 0)
         return false;
+      bn.release();
     }
 
     return true;

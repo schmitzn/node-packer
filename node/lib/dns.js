@@ -313,13 +313,11 @@ bindDefaultResolver(module.exports, getDefaultResolver());
 Object.defineProperties(module.exports, {
   promises: {
     configurable: true,
-    enumerable: false,
+    enumerable: true,
     get() {
       if (promises === null) {
         promises = require('internal/dns/promises');
         promises.setServers = defaultResolverSetServers;
-        process.emitWarning('The dns.promises API is experimental',
-                            'ExperimentalWarning');
       }
       return promises;
     }
